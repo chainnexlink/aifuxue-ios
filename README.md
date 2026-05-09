@@ -1,5 +1,7 @@
 # 爱辅学 iOS App
 
+[![GitHub Repo](https://img.shields.io/badge/GitHub-chainnexlink%2Faifuxue--ios-blue)](https://github.com/chainnexlink/aifuxue-ios)
+
 AI智能学习助手 - iOS 原生客户端
 
 ## 技术架构
