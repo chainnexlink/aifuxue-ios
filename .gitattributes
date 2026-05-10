@@ -1,0 +1,9 @@
+# Force LF line endings for iOS files (Xcode cannot parse CRLF)
+*.storyboard text eol=lf
+*.xib text eol=lf
+*.xcscheme text eol=lf
+*.plist text eol=lf
+*.pbxproj text eol=lf
+*.swift text eol=lf
+*.entitlements text eol=lf
+*.xcprivacy text eol=lf
