@@ -1,0 +1,113 @@
+name: iOS 自动构建并上传
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'aifuxue-ios/**'
+      - 'client/dist/build/h5/**'
+  workflow_dispatch:
+
+jobs:
+  build-and-upload:
+    name: 构建 iOS 并上传至 App Store Connect
+    runs-on: macos-latest
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '15.4'
+
+      - name: 安装 xcpretty
+        run: gem install xcpretty
+
+      - name: 导入代码签名证书
+        env:
+          CERTIFICATE_BASE64: ${{ secrets.IOS_SIGNING_CERTIFICATE_BASE64 }}
+          CERTIFICATE_PASSWORD: ${{ secrets.IOS_SIGNING_CERTIFICATE_PASSWORD }}
+        run: |
+          CERT_PATH="$RUNNER_TEMP/certificate.p12"
+          echo "$CERTIFICATE_BASE64" | base64 --decode -o "$CERT_PATH"
+          security create-keychain -p "" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "" build.keychain
+          security import "$CERT_PATH" -k build.keychain -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "" build.keychain
+
+      - name: 导入描述文件
+        env:
+          PROVISION_PROFILE_BASE64: ${{ secrets.IOS_PROVISION_PROFILE_BASE64 }}
+        run: |
+          PROFILE_PATH="$RUNNER_TEMP/profile.mobileprovision"
+          echo "$PROVISION_PROFILE_BASE64" | base64 --decode -o "$PROFILE_PATH"
+          UUID=$(/usr/libexec/PlistBuddy -c "Print :UUID" /dev/stdin <<< $(security cms -D -i "$PROFILE_PATH"))
+          mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
+          cp "$PROFILE_PATH" "$HOME/Library/MobileDevice/Provisioning Profiles/$UUID.mobileprovision"
+
+      - name: 构建 Archive
+        run: |
+          cd aifuxue-ios
+          xcodebuild archive \
+            -project AiFuXue.xcodeproj \
+            -scheme AiFuXue \
+            -configuration Release \
+            -archivePath "$RUNNER_TEMP/AiFuXue.xcarchive" \
+            -destination "generic/platform=iOS" \
+            CODE_SIGN_STYLE=Manual \
+            DEVELOPMENT_TEAM=${{ secrets.IOS_DEVELOPMENT_TEAM }} \
+            PROVISIONING_PROFILE_SPECIFIER="${{ secrets.IOS_PROVISION_PROFILE_NAME }}" \
+            CODE_SIGN_IDENTITY="iPhone Distribution" \
+            | xcpretty
+
+      - name: 导出 IPA
+        run: |
+          cat > "$RUNNER_TEMP/exportOptions.plist" << EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>app-store</string>
+            <key>teamID</key>
+            <string>${{ secrets.IOS_DEVELOPMENT_TEAM }}</string>
+            <key>uploadBitcode</key>
+            <false/>
+            <key>uploadSymbols</key>
+            <true/>
+          </dict>
+          </plist>
+          EOF
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/AiFuXue.xcarchive" \
+            -exportPath "$RUNNER_TEMP/AiFuXue" \
+            -exportOptionsPlist "$RUNNER_TEMP/exportOptions.plist" \
+            | xcpretty
+
+      - name: 上传至 App Store Connect
+        env:
+          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
+        run: |
+          # 写入 API Key
+          mkdir -p "$HOME/.appstoreconnect/private_keys"
+          echo "$APP_STORE_CONNECT_API_KEY" > "$HOME/.appstoreconnect/private_keys/AuthKey_${APP_STORE_CONNECT_API_KEY_ID}.p8"
+          
+          # 上传 IPA
+          xcrun altool --upload-app \
+            --type ios \
+            --file "$RUNNER_TEMP/AiFuXue/AiFuXue.ipa" \
+            --apiKey "$APP_STORE_CONNECT_API_KEY_ID" \
+            --apiIssuer "$APP_STORE_CONNECT_ISSUER_ID" \
+            --verbose
+
+      - name: 上传 IPA 为构建产物（备用）
+        uses: actions/upload-artifact@v4
+        with:
+          name: AiFuXue-iOS
+          path: "${{ runner.temp }}/AiFuXue/AiFuXue.ipa"
+          retention-days: 7

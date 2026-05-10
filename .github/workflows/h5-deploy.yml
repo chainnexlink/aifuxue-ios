@@ -1,0 +1,53 @@
+name: H5 构建并部署到服务器
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'client/src/**'
+      - 'client/index.html'
+      - 'client/vite.config.ts'
+      - 'client/package.json'
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    name: 构建 H5 并部署
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 安装依赖
+        run: |
+          cd client
+          npm ci
+
+      - name: 构建 H5
+        run: |
+          cd client
+          npm run build:h5
+
+      - name: 部署到服务器
+        uses: easingthemes/ssh-deploy@v4
+        with:
+          SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_KEY }}
+          REMOTE_HOST: ${{ secrets.SERVER_HOST }}
+          REMOTE_USER: ${{ secrets.SERVER_USER }}
+          SOURCE: 'client/dist/build/h5/'
+          TARGET: ${{ secrets.SERVER_H5_PATH }}
+          SCRIPT_AFTER: |
+            echo "H5 部署完成 - $(date)"
+
+      - name: 上传构建产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: AiFuXue-H5
+          path: client/dist/build/h5/
+          retention-days: 7
