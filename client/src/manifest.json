@@ -1,0 +1,31 @@
+{
+  "name": "爱辅学",
+  "appid": "__UNI__XXXXXXX",
+  "description": "爱辅学 - AI学习助手，拍照整理笔记、靶向练习、模拟考试",
+  "versionName": "1.0.0",
+  "versionCode": "100",
+  "transformPx": false,
+  "app-plus": {
+    "modules": {},
+    "distribute": {
+      "icons": {},
+      "splashscreen": {}
+    }
+  },
+  "mp-weixin": {
+    "appid": "",
+    "setting": {
+      "urlCheck": true,
+      "es6": true,
+      "postcss": true,
+      "minified": true,
+      "enhance": true
+    },
+    "usingComponents": true,
+    "permission": {},
+    "requiredPrivateInfos": [],
+    "__usePrivacyCheck__": true,
+    "lazyCodeLoading": "requiredComponents"
+  },
+  "h5": {}
+}

@@ -1,0 +1,213 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== 用户相关 ====================
+
+enum MembershipType {
+  FREE
+  VIP
+}
+
+enum GradeLevel {
+  PRIMARY    // 小学
+  JUNIOR     // 初中
+  SENIOR     // 高中
+  COLLEGE    // 大学
+  ADULT      // 成人
+}
+
+model User {
+  id                  String         @id @default(uuid())
+  phone               String?        @unique
+  openid              String?        @unique  // 微信openid
+  unionid             String?        @unique  // 微信unionid
+  nickname            String?
+  avatar              String?
+  gradeLevel          GradeLevel?
+  province            String?
+  city                String?
+  membershipType      MembershipType @default(FREE)
+  vipExpireAt         DateTime?
+  parentPasswordHash  String?
+  parentPasswordSalt  String?
+  parentFailedCount   Int            @default(0)
+  parentLockedUntil   DateTime?
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+
+  notes               Note[]
+  exercises           Exercise[]
+  exerciseAttempts    ExerciseAttempt[]
+  mistakes            Mistake[]
+  adWatchLogs         AdWatchLog[]
+
+  @@map("users")
+}
+
+// ==================== 笔记相关 ====================
+
+model Note {
+  id              String    @id @default(uuid())
+  userId          String
+  title           String?
+  subject         String?
+  originalImages  String[]  // 原始图片URL列表
+  originalOcr     String?   @db.Text
+  markdownContent String?   @db.Text
+  previewLength   Int       @default(20) // 预览行数百分比
+  isLocked        Boolean   @default(true)
+  status          String    @default("processing") // processing, completed, failed
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user            User      @relation(fields: [userId], references: [id])
+  exercises       Exercise[]
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("notes")
+}
+
+// ==================== 练习相关 ====================
+
+model Exercise {
+  id            String    @id @default(uuid())
+  userId        String
+  noteId        String?
+  questionsJson Json      // 题目JSON (含加密答案)
+  totalCount    Int       @default(0)
+  generatedAt   DateTime  @default(now())
+
+  user          User      @relation(fields: [userId], references: [id])
+  note          Note?     @relation(fields: [noteId], references: [id])
+  attempts      ExerciseAttempt[]
+
+  @@index([userId])
+  @@map("exercises")
+}
+
+model ExerciseAttempt {
+  id          String   @id @default(uuid())
+  exerciseId  String
+  userId      String
+  answersJson Json
+  score       Int?
+  totalScore  Int?
+  submittedAt DateTime @default(now())
+
+  exercise    Exercise @relation(fields: [exerciseId], references: [id])
+  user        User     @relation(fields: [userId], references: [id])
+
+  @@index([exerciseId])
+  @@map("exercise_attempts")
+}
+
+// ==================== 错题相关 ====================
+
+model Mistake {
+  id             String    @id @default(uuid())
+  userId         String
+  imageUrls      String[]
+  ocrText        String?   @db.Text
+  wrongAnswer    String?   @db.Text
+  knowledgePoint String?
+  errorReason    String?
+  subject        String?
+  status         String    @default("processing") // processing, completed, failed
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  user              User               @relation(fields: [userId], references: [id])
+  similarQuestions  SimilarQuestion[]
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("mistakes")
+}
+
+model SimilarQuestion {
+  id            String   @id @default(uuid())
+  mistakeId     String
+  questionsJson Json
+  createdAt     DateTime @default(now())
+
+  mistake       Mistake  @relation(fields: [mistakeId], references: [id])
+  attempts      SimilarAttempt[]
+
+  @@map("similar_questions")
+}
+
+model SimilarAttempt {
+  id                String   @id @default(uuid())
+  similarQuestionId String
+  userId            String
+  answersJson       Json
+  score             Int?
+  submittedAt       DateTime @default(now())
+
+  similarQuestion   SimilarQuestion @relation(fields: [similarQuestionId], references: [id])
+
+  @@map("similar_attempts")
+}
+
+// ==================== 广告日志 ====================
+
+model AdWatchLog {
+  id        String   @id @default(uuid())
+  userId    String
+  adType    String   // note_unlock, exercise_generate, etc.
+  watchedAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([userId, adType, watchedAt])
+  @@map("ad_watch_logs")
+}
+
+// ==================== 官网内容管理 ====================
+
+model WebContent {
+  id        String   @id @default(uuid())
+  section   String   // hero, features, about, faq, help, privacy, agreement, testimonials, stats
+  key       String   // unique identifier within section
+  title     String?
+  content   Json     // flexible JSON content
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([section, key])
+  @@index([section, isActive, sortOrder])
+  @@map("web_contents")
+}
+
+// ==================== 管理员 ====================
+
+enum AdminRole {
+  SUPER_ADMIN
+  ADMIN
+  OPERATOR
+  VIEWER
+}
+
+model Admin {
+  id            String        @id @default(uuid())
+  username      String        @unique
+  passwordHash  String
+  name          String
+  role          AdminRole     @default(ADMIN)
+  isActive      Boolean       @default(true)
+  lastLoginAt   DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@map("admins")
+}

@@ -1,0 +1,71 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+*.swp
+*.swo
+.vscode/
+.idea/
+
+# Xcode
+*.xcuserstate
+*.xcworkspace/xcuserdata/
+*.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist
+DerivedData/
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# CocoaPods
+Pods/
+Podfile.lock
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# Archives
+*.xcarchive
+
+# App Store Connect
+*.itmsp
+
+# Sensitive
+*.p12
+*.mobileprovision
+*.provisionprofile
+*.cer
+ExportOptions.plist
+
+# Android
+*.apk
+*.aab
+local.properties
+
+# Temp scripts
+scan-*.ps1
+find-*.ps1
+nul
+vibe_images/

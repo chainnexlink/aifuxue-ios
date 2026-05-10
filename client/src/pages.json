@@ -1,0 +1,253 @@
+{
+  "pages": [
+    {
+      "path": "pages/home/index",
+      "style": { "navigationBarTitleText": "爱辅学", "navigationStyle": "custom" }
+    },
+    {
+      "path": "pages/notes/index",
+      "style": { "navigationBarTitleText": "笔记", "navigationStyle": "custom" }
+    },
+    {
+      "path": "pages/practice/index",
+      "style": { "navigationBarTitleText": "练习", "navigationStyle": "custom" }
+    },
+    {
+      "path": "pages/mistakes/index",
+      "style": { "navigationBarTitleText": "错题本", "navigationStyle": "custom" }
+    },
+    {
+      "path": "pages/profile/index",
+      "style": { "navigationBarTitleText": "我的", "navigationStyle": "custom" }
+    },
+    {
+      "path": "pages/login/index",
+      "style": { "navigationBarTitleText": "登录" }
+    },
+    {
+      "path": "pages/register/index",
+      "style": { "navigationBarTitleText": "注册" }
+    },
+    {
+      "path": "pages/notes/detail/index",
+      "style": { "navigationBarTitleText": "笔记详情" }
+    },
+    {
+      "path": "pages/notes/preview/index",
+      "style": { "navigationBarTitleText": "笔记预览" }
+    },
+    {
+      "path": "pages/about/index",
+      "style": { "navigationBarTitleText": "了解完整版功能" }
+    },
+    {
+      "path": "pages/parent/index",
+      "style": { "navigationBarTitleText": "家长中心" }
+    },
+    {
+      "path": "pages/settings/index",
+      "style": { "navigationBarTitleText": "个人设置" }
+    },
+    {
+      "path": "pages/exercise/index",
+      "style": { "navigationBarTitleText": "靶向练习" }
+    },
+    {
+      "path": "pages/exercise/result/index",
+      "style": { "navigationBarTitleText": "答案解析" }
+    },
+    {
+      "path": "pages/exam-sprint/index",
+      "style": { "navigationBarTitleText": "考前冲刺" }
+    },
+    {
+      "path": "pages/mock-exam/index",
+      "style": { "navigationBarTitleText": "模拟考试" }
+    },
+    {
+      "path": "pages/mock-exam/do/index",
+      "style": { "navigationBarTitleText": "考试中" }
+    },
+    {
+      "path": "pages/mistakes/detail/index",
+      "style": { "navigationBarTitleText": "错题详情" }
+    },
+    {
+      "path": "pages/mistakes/similar/index",
+      "style": { "navigationBarTitleText": "同类变式题" }
+    },
+    {
+      "path": "pages/mistakes/consolidation/index",
+      "style": { "navigationBarTitleText": "错题巩固卷" }
+    },
+    {
+      "path": "pages/oral/index",
+      "style": { "navigationBarTitleText": "英语口语" }
+    },
+    {
+      "path": "pages/oral/confirm/index",
+      "style": { "navigationBarTitleText": "确认练习内容" }
+    },
+    {
+      "path": "pages/oral/settings/index",
+      "style": { "navigationBarTitleText": "练习设置" }
+    },
+    {
+      "path": "pages/oral/practice/index",
+      "style": { "navigationBarTitleText": "口语练习" }
+    },
+    {
+      "path": "pages/exercise/analysis/index",
+      "style": { "navigationBarTitleText": "答题分析" }
+    },
+    {
+      "path": "pages/parent/weekly-report/index",
+      "style": { "navigationBarTitleText": "学习周报" }
+    },
+    {
+      "path": "pages/parent/report-detail/index",
+      "style": { "navigationBarTitleText": "科目分析" }
+    },
+    {
+      "path": "pages/profile/knowledge-map/index",
+      "style": { "navigationBarTitleText": "知识图谱" }
+    },
+    {
+      "path": "pages/profile/export/index",
+      "style": { "navigationBarTitleText": "数据导出" }
+    },
+    {
+      "path": "pages/class/join/index",
+      "style": { "navigationBarTitleText": "加入班级" }
+    },
+    {
+      "path": "pages/class/homework/index",
+      "style": { "navigationBarTitleText": "班级作业" }
+    },
+    {
+      "path": "pages/class/homework-detail/index",
+      "style": { "navigationBarTitleText": "作业详情" }
+    },
+    {
+      "path": "pages/invite/redeem/index",
+      "style": { "navigationBarTitleText": "兑换邀请码" }
+    },
+    {
+      "path": "pages/membership/index",
+      "style": { "navigationBarTitleText": "会员中心" }
+    },
+    {
+      "path": "pages/teacher/auth/index",
+      "style": { "navigationBarTitleText": "教师认证" }
+    },
+    {
+      "path": "pages/teacher/class-create/index",
+      "style": { "navigationBarTitleText": "创建班级" }
+    },
+    {
+      "path": "pages/teacher/class-detail/index",
+      "style": { "navigationBarTitleText": "班级详情" }
+    },
+    {
+      "path": "pages/teacher/homework-publish/index",
+      "style": { "navigationBarTitleText": "发布作业" }
+    },
+    {
+      "path": "pages/teacher/homework-detail/index",
+      "style": { "navigationBarTitleText": "作业详情" }
+    },
+    {
+      "path": "pages/teacher/homework-grade/index",
+      "style": { "navigationBarTitleText": "批改作业" }
+    },
+    {
+      "path": "pages/teacher/teaching-info/index",
+      "style": { "navigationBarTitleText": "教材与教学信息" }
+    },
+    {
+      "path": "pages/teacher/exam-gen/index",
+      "style": { "navigationBarTitleText": "AI智能出卷" }
+    },
+    {
+      "path": "pages/teacher/exam-gen/preview",
+      "style": { "navigationBarTitleText": "试卷预览" }
+    },
+    {
+      "path": "pages/teacher/teaching-plan/index",
+      "style": { "navigationBarTitleText": "AI教案生成" }
+    },
+    {
+      "path": "pages/teacher/class-mistakes/index",
+      "style": { "navigationBarTitleText": "班级错题集" }
+    },
+    {
+      "path": "pages/teacher/class-mistakes/detail",
+      "style": { "navigationBarTitleText": "错题详情" }
+    },
+    {
+      "path": "pages/teacher/reminder-settings/index",
+      "style": { "navigationBarTitleText": "催交提醒设置" }
+    },
+    {
+      "path": "pages/teacher/grade-publish/index",
+      "style": { "navigationBarTitleText": "发布成绩" }
+    },
+    {
+      "path": "pages/class/grades/index",
+      "style": { "navigationBarTitleText": "我的成绩" }
+    },
+    {
+      "path": "pages/legal/privacy",
+      "style": { "navigationBarTitleText": "隐私政策" }
+    },
+    {
+      "path": "pages/legal/agreement",
+      "style": { "navigationBarTitleText": "用户协议" }
+    }
+  ],
+  "globalStyle": {
+    "navigationBarTextStyle": "white",
+    "navigationBarTitleText": "爱辅学",
+    "navigationBarBackgroundColor": "#0F1118",
+    "backgroundColor": "#0F1118"
+  },
+  "tabBar": {
+    "custom": true,
+    "color": "#4D5466",
+    "selectedColor": "#5B7BFF",
+    "borderStyle": "black",
+    "backgroundColor": "#141722",
+    "list": [
+      {
+        "pagePath": "pages/home/index",
+        "text": "首页",
+        "iconPath": "static/tab-home.png",
+        "selectedIconPath": "static/tab-home-active.png"
+      },
+      {
+        "pagePath": "pages/notes/index",
+        "text": "笔记",
+        "iconPath": "static/tab-notes.png",
+        "selectedIconPath": "static/tab-notes-active.png"
+      },
+      {
+        "pagePath": "pages/practice/index",
+        "text": "练习",
+        "iconPath": "static/tab-practice.png",
+        "selectedIconPath": "static/tab-practice-active.png"
+      },
+      {
+        "pagePath": "pages/mistakes/index",
+        "text": "错题本",
+        "iconPath": "static/tab-mistakes.png",
+        "selectedIconPath": "static/tab-mistakes-active.png"
+      },
+      {
+        "pagePath": "pages/profile/index",
+        "text": "我的",
+        "iconPath": "static/tab-profile.png",
+        "selectedIconPath": "static/tab-profile-active.png"
+      }
+    ]
+  }
+}

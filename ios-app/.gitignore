@@ -1,0 +1,18 @@
+# Xcode
+build/
+DerivedData/
+*.xcuserdata
+*.xcworkspace
+!*.xcodeproj/project.pbxproj
+!*.xcodeproj/xcshareddata/
+
+# CocoaPods
+Pods/
+
+# macOS
+.DS_Store
+
+# Archives
+*.ipa
+*.dSYM.zip
+*.dSYM
