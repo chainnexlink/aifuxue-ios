@@ -42,3 +42,15 @@ ExportOptions.plist
 
 # App Store Connect
 *.itmsp
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/test_output/
+
+# Keys
+*.p8
+*.pem
+
+# Misc
+nul

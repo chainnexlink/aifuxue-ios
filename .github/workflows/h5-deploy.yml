@@ -35,14 +35,23 @@ jobs:
           npm run build:h5
 
       - name: 部署到服务器
-        uses: burnett01/rsync-deployments@7.0.2
-        with:
-          switches: -avzr --delete
-          path: client/dist/build/h5/
-          remote_path: ${{ secrets.SERVER_H5_PATH }}
-          remote_host: ${{ secrets.SERVER_HOST }}
-          remote_user: ${{ secrets.SERVER_USER }}
-          remote_key: ${{ secrets.SERVER_SSH_KEY }}
+        env:
+          SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
+          HOST: ${{ secrets.SERVER_HOST }}
+          USER: ${{ secrets.SERVER_USER }}
+          TARGET: ${{ secrets.SERVER_H5_PATH }}
+        run: |
+          echo "$SSH_KEY" > /tmp/deploy_key
+          chmod 600 /tmp/deploy_key
+          echo "=== Testing SSH connection ==="
+          ssh -i /tmp/deploy_key -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${USER}@${HOST} "echo SSH_OK && mkdir -p ${TARGET}"
+          echo "=== Uploading files ==="
+          cd client/dist/build/h5
+          tar czf /tmp/h5.tar.gz .
+          scp -i /tmp/deploy_key -o StrictHostKeyChecking=no /tmp/h5.tar.gz ${USER}@${HOST}:/tmp/
+          ssh -i /tmp/deploy_key -o StrictHostKeyChecking=no ${USER}@${HOST} "cd ${TARGET} && tar xzf /tmp/h5.tar.gz && rm /tmp/h5.tar.gz && echo 'Files extracted OK'"
+          rm /tmp/deploy_key /tmp/h5.tar.gz
+          echo "=== Deploy completed ==="
 
       - name: 上传构建产物
         uses: actions/upload-artifact@v4

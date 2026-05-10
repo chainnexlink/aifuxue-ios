@@ -54,10 +54,23 @@ Podfile.lock
 
 # Sensitive
 *.p12
+*.p8
+*.pem
+*.key
+*.csr
 *.mobileprovision
 *.provisionprofile
 *.cer
 ExportOptions.plist
+ios-certs/
+
+# Zip logs
+*.zip
+
+# Private config
+project.private.config.json
+write_fastfile.py
+write_workflow.py
 
 # Android
 *.apk

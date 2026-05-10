@@ -1,0 +1,190 @@
+default_platform(:ios)
+
+platform :ios do
+  # Revoke orphaned distribution certificates whose private keys were lost in previous CI runs
+  private_lane :revoke_orphaned_certs do |options|
+    require 'spaceship'
+
+    api_key = options[:api_key]
+
+    token = Spaceship::ConnectAPI::Token.create(
+      key_id: ENV["APP_STORE_CONNECT_API_KEY_ID"],
+      issuer_id: ENV["APP_STORE_CONNECT_API_ISSUER_ID"],
+      filepath: ENV["API_KEY_PATH"]
+    )
+    Spaceship::ConnectAPI.token = token
+
+    all_certs = []
+    # Check both legacy (IOS_DISTRIBUTION) and modern (DISTRIBUTION / Apple Distribution) types
+    ["DISTRIBUTION", "IOS_DISTRIBUTION"].each do |cert_type|
+      found = Spaceship::ConnectAPI::Certificate.all(
+        filter: { certificateType: cert_type }
+      )
+      UI.message("Found #{found.count} certificate(s) of type #{cert_type}")
+      all_certs.concat(found)
+    end
+
+    UI.message("Total distribution certificates: #{all_certs.count}")
+
+    if all_certs.count >= 2
+      UI.important("Maximum certificates reached, revoking all orphaned certificates...")
+      all_certs.each do |cert|
+        begin
+          UI.message("Revoking certificate: #{cert.id} (#{cert.display_name})")
+          cert.delete!
+        rescue => e
+          UI.important("Could not revoke #{cert.id}: #{e.message}")
+        end
+      end
+      UI.success("Revocation complete")
+    end
+  end
+
+  desc "Build and upload to App Store Connect"
+  lane :release do
+    keychain_path = ENV["KEYCHAIN_PATH"]
+    keychain_password = ENV["KEYCHAIN_PASSWORD"]
+
+    # Setup API key
+    api_key = app_store_connect_api_key(
+      key_id: ENV["APP_STORE_CONNECT_API_KEY_ID"],
+      issuer_id: ENV["APP_STORE_CONNECT_API_ISSUER_ID"],
+      key_filepath: ENV["API_KEY_PATH"],
+      in_house: false
+    )
+
+    # Revoke orphaned certificates from previous CI runs (private keys were lost)
+    revoke_orphaned_certs(api_key: api_key)
+
+    # Auto-create/download distribution certificate
+    get_certificates(
+      api_key: api_key,
+      platform: "ios",
+      keychain_path: keychain_path,
+      keychain_password: keychain_password
+    )
+
+    # Re-apply partition list after cert import (critical for codesign access)
+    sh("security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k '#{keychain_password}' '#{keychain_path}'")
+
+    # Debug: verify signing identity is available
+    sh("security find-identity -v -p codesigning '#{keychain_path}'")
+
+    # Auto-create/download provisioning profile (force refresh to match new cert)
+    get_provisioning_profile(
+      api_key: api_key,
+      app_identifier: "cn.aifuxue.app",
+      platform: "ios",
+      force: true
+    )
+
+    # Configure manual code signing with the downloaded cert and profile
+    update_code_signing_settings(
+      use_automatic_signing: false,
+      team_id: ENV["APPLE_TEAM_ID"],
+      path: "AiFuXue.xcodeproj",
+      code_sign_identity: "Apple Distribution",
+      profile_name: lane_context[SharedValues::SIGH_NAME],
+      bundle_identifier: "cn.aifuxue.app",
+      targets: ["AiFuXue"]
+    )
+
+    # Auto-increment build number to avoid upload conflicts
+    increment_build_number(
+      build_number: latest_testflight_build_number(
+        api_key: api_key,
+        app_identifier: "cn.aifuxue.app"
+      ) + 1,
+      xcodeproj: "AiFuXue.xcodeproj"
+    )
+
+    # Build the app
+    build_app(
+      project: "AiFuXue.xcodeproj",
+      scheme: "AiFuXue",
+      configuration: "Release",
+      export_method: "app-store",
+      clean: true,
+      export_options: {
+        signingStyle: "manual",
+        teamID: ENV["APPLE_TEAM_ID"],
+        provisioningProfiles: {
+          "cn.aifuxue.app" => lane_context[SharedValues::SIGH_NAME]
+        }
+      }
+    )
+
+    # Upload to App Store Connect
+    upload_to_app_store(
+      api_key: api_key,
+      skip_metadata: true,
+      skip_screenshots: true,
+      force: true,
+      precheck_include_in_app_purchases: false,
+      skip_app_version_update: true
+    )
+  end
+
+  desc "Build only (no upload)"
+  lane :build_only do
+    keychain_path = ENV["KEYCHAIN_PATH"]
+    keychain_password = ENV["KEYCHAIN_PASSWORD"]
+
+    # Setup API key
+    api_key = app_store_connect_api_key(
+      key_id: ENV["APP_STORE_CONNECT_API_KEY_ID"],
+      issuer_id: ENV["APP_STORE_CONNECT_API_ISSUER_ID"],
+      key_filepath: ENV["API_KEY_PATH"],
+      in_house: false
+    )
+
+    # Revoke orphaned certificates from previous CI runs
+    revoke_orphaned_certs(api_key: api_key)
+
+    # Auto-create/download distribution certificate
+    get_certificates(
+      api_key: api_key,
+      platform: "ios",
+      keychain_path: keychain_path,
+      keychain_password: keychain_password
+    )
+
+    # Re-apply partition list after cert import
+    sh("security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k '#{keychain_password}' '#{keychain_path}'")
+
+    # Auto-create/download provisioning profile (force refresh to match new cert)
+    get_provisioning_profile(
+      api_key: api_key,
+      app_identifier: "cn.aifuxue.app",
+      platform: "ios",
+      force: true
+    )
+
+    # Configure manual code signing with the downloaded cert and profile
+    update_code_signing_settings(
+      use_automatic_signing: false,
+      team_id: ENV["APPLE_TEAM_ID"],
+      path: "AiFuXue.xcodeproj",
+      code_sign_identity: "Apple Distribution",
+      profile_name: lane_context[SharedValues::SIGH_NAME],
+      bundle_identifier: "cn.aifuxue.app",
+      targets: ["AiFuXue"]
+    )
+
+    # Build the app
+    build_app(
+      project: "AiFuXue.xcodeproj",
+      scheme: "AiFuXue",
+      configuration: "Release",
+      export_method: "app-store",
+      clean: true,
+      export_options: {
+        signingStyle: "manual",
+        teamID: ENV["APPLE_TEAM_ID"],
+        provisioningProfiles: {
+          "cn.aifuxue.app" => lane_context[SharedValues::SIGH_NAME]
+        }
+      }
+    )
+  end
+end
