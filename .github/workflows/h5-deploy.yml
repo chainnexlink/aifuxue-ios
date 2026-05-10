@@ -35,15 +35,14 @@ jobs:
           npm run build:h5
 
       - name: 部署到服务器
-        uses: easingthemes/ssh-deploy@v4
+        uses: burnett01/rsync-deployments@7.0.2
         with:
-          SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_KEY }}
-          REMOTE_HOST: ${{ secrets.SERVER_HOST }}
-          REMOTE_USER: ${{ secrets.SERVER_USER }}
-          SOURCE: 'client/dist/build/h5/'
-          TARGET: ${{ secrets.SERVER_H5_PATH }}
-          SCRIPT_AFTER: |
-            echo "H5 部署完成 - $(date)"
+          switches: -avzr --delete
+          path: client/dist/build/h5/
+          remote_path: ${{ secrets.SERVER_H5_PATH }}
+          remote_host: ${{ secrets.SERVER_HOST }}
+          remote_user: ${{ secrets.SERVER_USER }}
+          remote_key: ${{ secrets.SERVER_SSH_KEY }}
 
       - name: 上传构建产物
         uses: actions/upload-artifact@v4
