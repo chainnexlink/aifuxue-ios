@@ -42,9 +42,12 @@
 		</dict>
 	</dict>
 
-	<!-- 启动屏 -->
-	<key>UILaunchStoryboardName</key>
-	<string>LaunchScreen</string>
+	<!-- 启动屏 - 使用纯色背景，无需 storyboard -->
+	<key>UILaunchScreen</key>
+	<dict>
+		<key>UIColorName</key>
+		<string>LaunchBackground</string>
+	</dict>
 
 	<!-- 全屏模式（非iPad多任务悬浮） -->
 	<key>UIRequiresFullScreen</key>
