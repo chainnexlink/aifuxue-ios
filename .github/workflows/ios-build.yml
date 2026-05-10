@@ -1,5 +1,5 @@
 name: Build iOS & Upload to App Store Connect
-
+# Workflow for building AiFuXue iOS app
 on:
   workflow_dispatch:
     inputs:
