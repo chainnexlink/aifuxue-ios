@@ -36,20 +36,22 @@ jobs:
           if [ -f "$ICON" ]; then
             echo "Removing alpha channel from app icon..."
             pip3 install Pillow --quiet
-            python3 -c "
-from PIL import Image
-img = Image.open('$ICON')
-if img.mode in ('RGBA', 'LA', 'PA'):
-    bg = Image.new('RGB', img.size, (15, 17, 24))
-    bg.paste(img, mask=img.split()[-1])
-    bg.save('$ICON')
-    print('Alpha channel removed')
-elif img.mode != 'RGB':
-    img.convert('RGB').save('$ICON')
-    print('Converted to RGB')
-else:
-    print('Already RGB')
-"
+            python3 << 'PYEOF'
+          import sys
+          from PIL import Image
+          icon = "aifuxue-ios/AiFuXue/Assets.xcassets/AppIcon.appiconset/icon-1024.png"
+          img = Image.open(icon)
+          if img.mode in ('RGBA', 'LA', 'PA'):
+              bg = Image.new('RGB', img.size, (15, 17, 24))
+              bg.paste(img, mask=img.split()[-1])
+              bg.save(icon)
+              print('Alpha channel removed')
+          elif img.mode != 'RGB':
+              img.convert('RGB').save(icon)
+              print('Converted to RGB')
+          else:
+              print('Already RGB')
+          PYEOF
           fi
 
       - name: Setup Ruby
