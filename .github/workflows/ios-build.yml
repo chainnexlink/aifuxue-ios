@@ -30,6 +30,28 @@ jobs:
           sudo xcode-select -s "$LATEST_XCODE/Contents/Developer"
           xcodebuild -version
 
+      - name: Fix App Icon (remove alpha channel)
+        run: |
+          ICON="aifuxue-ios/AiFuXue/Assets.xcassets/AppIcon.appiconset/icon-1024.png"
+          if [ -f "$ICON" ]; then
+            echo "Removing alpha channel from app icon..."
+            pip3 install Pillow --quiet
+            python3 -c "
+from PIL import Image
+img = Image.open('$ICON')
+if img.mode in ('RGBA', 'LA', 'PA'):
+    bg = Image.new('RGB', img.size, (15, 17, 24))
+    bg.paste(img, mask=img.split()[-1])
+    bg.save('$ICON')
+    print('Alpha channel removed')
+elif img.mode != 'RGB':
+    img.convert('RGB').save('$ICON')
+    print('Converted to RGB')
+else:
+    print('Already RGB')
+"
+          fi
+
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
