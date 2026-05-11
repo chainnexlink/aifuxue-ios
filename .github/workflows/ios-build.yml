@@ -25,16 +25,10 @@ jobs:
 
       - name: Select Xcode
         run: |
-          # 优先选择稳定版 Xcode 16.x，避免 beta 版本兼容问题
-          STABLE_XCODE=$(ls -d /Applications/Xcode_16*.app 2>/dev/null | sort -V | tail -1)
-          if [ -z "$STABLE_XCODE" ]; then
-            STABLE_XCODE=$(ls -d /Applications/Xcode*.app 2>/dev/null | grep -v beta | sort -V | tail -1)
-          fi
-          if [ -z "$STABLE_XCODE" ]; then
-            STABLE_XCODE=$(ls -d /Applications/Xcode*.app 2>/dev/null | sort -V | tail -1)
-          fi
-          echo "Selecting: $STABLE_XCODE"
-          sudo xcode-select -s "$STABLE_XCODE/Contents/Developer"
+          # Apple要求iOS 26 SDK，必须使用最新Xcode
+          LATEST_XCODE=$(ls -d /Applications/Xcode*.app 2>/dev/null | sort -V | tail -1)
+          echo "Selecting: $LATEST_XCODE"
+          sudo xcode-select -s "$LATEST_XCODE/Contents/Developer"
           xcodebuild -version
 
       - name: Setup Ruby
@@ -75,6 +69,20 @@ jobs:
 
           echo "KEYCHAIN_PATH=$KEYCHAIN_PATH" >> $GITHUB_ENV
           echo "KEYCHAIN_PASSWORD=$KEYCHAIN_PASSWORD" >> $GITHUB_ENV
+
+      - name: Fix App Icon (remove alpha channel)
+        run: |
+          ICON_PATH="aifuxue-ios/AiFuXue/Assets.xcassets/AppIcon.appiconset/icon-1024.png"
+          if [ -f "$ICON_PATH" ]; then
+            sips -s format png --setProperty formatOptions 0 "$ICON_PATH" --out "$ICON_PATH.tmp"
+            # 使用sips移除alpha通道：转为不含alpha的PNG
+            sips -s format png -s formatOptions 0 "$ICON_PATH" -o "$ICON_PATH.noalpha" 2>/dev/null || true
+            # 通过转换为jpg再转回png来彻底移除alpha
+            sips -s format jpeg "$ICON_PATH" --out "$ICON_PATH.jpg"
+            sips -s format png "$ICON_PATH.jpg" --out "$ICON_PATH"
+            rm -f "$ICON_PATH.tmp" "$ICON_PATH.noalpha" "$ICON_PATH.jpg"
+            echo "App icon alpha channel removed"
+          fi
 
       - name: Build and Upload with Fastlane
         working-directory: aifuxue-ios
