@@ -67,6 +67,21 @@
       </view>
     </view>
 
+    <!-- 积分中心 -->
+    <view class="credits-card" @tap="goCredits">
+      <view class="credits-left">
+        <text class="credits-icon">💎</text>
+        <view class="credits-info">
+          <text class="credits-title">我的积分</text>
+          <text class="credits-desc">邀请学生注册赚积分，可抵扣会员和消耗次数</text>
+        </view>
+      </view>
+      <view class="credits-right">
+        <text class="credits-num">{{ credits }}</text>
+        <view class="mi-arrow"></view>
+      </view>
+    </view>
+
     <!-- 功能列表 -->
     <view class="section-card">
       <view class="menu-list">
@@ -111,10 +126,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { ref, computed } from 'vue';
+import { onShow } from '@dcloudio/uni-app';
 import { useUserStore } from '@/store/user';
+import { creditsApi } from '@/utils/api';
 
 const userStore = useUserStore();
+const credits = ref(0);
 
 const avatarChar = computed(() => {
   const name = userStore.user?.teacherName || '';
@@ -125,6 +143,17 @@ const teacherCode = computed(() => {
   return userStore.user?.id?.slice(-6)?.toUpperCase() || 'X9K2M7';
 });
 
+onShow(() => {
+  loadCredits();
+});
+
+async function loadCredits() {
+  try {
+    const res = await creditsApi.getBalance();
+    credits.value = res.credits;
+  } catch {}
+}
+
 function copyInviteCode() {
   uni.setClipboardData({
     data: `TEACHER-${teacherCode.value}`,
@@ -134,6 +163,10 @@ function copyInviteCode() {
 
 function shareInvite() {
   uni.showToast({ title: '海报生成中...', icon: 'loading' });
+}
+
+function goCredits() {
+  uni.navigateTo({ url: '/pages/teacher/credits/index' });
 }
 
 function toggleView() {
@@ -277,4 +310,22 @@ function handleLogout() {
   border-right: 2.5rpx solid #FFD700; border-top: 2.5rpx solid #FFD700;
   transform: rotate(45deg); flex-shrink: 0;
 }
+
+.credits-card {
+  background: linear-gradient(135deg, #1E2A5E, #2D3F8F);
+  border-radius: 24rpx;
+  padding: 28rpx 24rpx;
+  margin-bottom: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1rpx solid rgba(91,123,255,0.3);
+}
+.credits-left { display: flex; align-items: center; gap: 16rpx; flex: 1; }
+.credits-icon { font-size: 40rpx; }
+.credits-info { display: flex; flex-direction: column; gap: 6rpx; }
+.credits-title { font-size: 30rpx; font-weight: 700; color: #E8ECF4; }
+.credits-desc { font-size: 22rpx; color: rgba(232,236,244,0.6); }
+.credits-right { display: flex; align-items: center; gap: 12rpx; }
+.credits-num { font-size: 36rpx; font-weight: 800; color: #5B7BFF; }
 </style>

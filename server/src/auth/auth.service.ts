@@ -6,6 +6,7 @@ import Dysmsapi20170525, * as $Dysmsapi from '@alicloud/dysmsapi20170525';
 import * as $OpenApi from '@alicloud/openapi-client';
 import * as $Util from '@alicloud/tea-util';
 import { PrismaService } from '../prisma/prisma.service';
+import { CreditsService } from '../credits/credits.service';
 import { RegisterDto, LoginDto } from './dto/auth.dto';
 
 @Injectable()
@@ -17,6 +18,7 @@ export class AuthService {
   constructor(
     private prisma: PrismaService,
     private configService: ConfigService,
+    private creditsService: CreditsService,
   ) {
     this.initSmsClient();
   }
@@ -108,6 +110,23 @@ export class AuthService {
       throw new BadRequestException('该手机号已注册');
     }
 
+    // 解析邀请码，查找推荐教师
+    let referredByTeacherId: string | null = null;
+    if (dto.inviteCode) {
+      const teacherIdSuffix = this.parseTeacherInviteCode(dto.inviteCode);
+      if (teacherIdSuffix) {
+        const teacher = await this.prisma.user.findFirst({
+          where: {
+            role: 'teacher',
+            id: { endsWith: teacherIdSuffix.toLowerCase() },
+          },
+        });
+        if (teacher) {
+          referredByTeacherId = teacher.id;
+        }
+      }
+    }
+
     // 创建用户
     const user = await this.prisma.user.create({
       data: {
@@ -116,8 +135,19 @@ export class AuthService {
         gradeLevel: dto.gradeLevel,
         province: dto.province,
         city: dto.city,
+        role: dto.role || 'student',
+        referredByTeacherId,
       },
     });
+
+    // 如果是通过教师邀请码注册的，给教师奖励积分
+    if (referredByTeacherId) {
+      try {
+        await this.creditsService.awardReferralCredit(referredByTeacherId, user.id);
+      } catch (err) {
+        console.error('[Credits] 积分奖励失败:', err);
+      }
+    }
 
     this.verificationCodes.delete(dto.phone);
 
@@ -131,8 +161,15 @@ export class AuthService {
         province: user.province,
         city: user.city,
         membershipType: user.membershipType,
+        role: user.role,
       },
     };
+  }
+
+  /** 解析教师邀请码，返回教师ID后缀 */
+  private parseTeacherInviteCode(code: string): string | null {
+    const match = code.match(/^TEACHER-([A-Za-z0-9]{6})$/i);
+    return match ? match[1] : null;
   }
 
   async login(dto: LoginDto) {
@@ -162,6 +199,8 @@ export class AuthService {
         city: user.city,
         membershipType: user.membershipType,
         vipExpireAt: user.vipExpireAt,
+        role: user.role,
+        credits: user.role === 'teacher' ? user.credits : undefined,
       },
     };
   }

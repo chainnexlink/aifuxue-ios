@@ -12,6 +12,8 @@ export const authApi = {
     gradeLevel: string;
     province: string;
     city: string;
+    role?: string;
+    inviteCode?: string;
   }) => request({ url: '/auth/register', method: 'POST', data }),
 
   login: (data: { phone: string; code: string }) =>
@@ -64,4 +66,46 @@ export const parentApi = {
       method: 'POST',
       data: { password },
     }),
+};
+
+// ========== 积分 ==========
+export const creditsApi = {
+  /** 获取积分余额 */
+  getBalance: () => request<{ credits: number }>({ url: '/credits/balance' }),
+
+  /** 获取积分概览 */
+  getOverview: () => request<{
+    balance: number;
+    totalEarned: number;
+    totalSpent: number;
+    referralCount: number;
+  }>({ url: '/credits/overview' }),
+
+  /** 获取积分明细 */
+  getHistory: (params?: { type?: string; page?: number; pageSize?: number }) => {
+    const query = new URLSearchParams();
+    if (params?.type) query.set('type', params.type);
+    if (params?.page) query.set('page', String(params.page));
+    if (params?.pageSize) query.set('pageSize', String(params.pageSize));
+    return request<{
+      total: number;
+      page: number;
+      pageSize: number;
+      records: Array<{
+        id: string;
+        amount: number;
+        type: string;
+        description: string;
+        createdAt: string;
+      }>;
+    }>({ url: `/credits/history?${query.toString()}` });
+  },
+
+  /** 积分抵扣会员 */
+  useForMembership: (creditsToUse: number, planId: string) =>
+    request({ url: '/credits/use/membership', method: 'POST', data: { creditsToUse, planId } }),
+
+  /** 积分抵扣消耗次数 */
+  useForQuota: (creditsToUse: number) =>
+    request({ url: '/credits/use/quota', method: 'POST', data: { creditsToUse } }),
 };

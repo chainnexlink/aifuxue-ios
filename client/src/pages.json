@@ -197,6 +197,22 @@
       "style": { "navigationBarTitleText": "我的成绩" }
     },
     {
+      "path": "pages/teacher/credits/index",
+      "style": { "navigationBarTitleText": "我的积分" }
+    },
+    {
+      "path": "pages/teacher/credits-history/index",
+      "style": { "navigationBarTitleText": "积分明细" }
+    },
+    {
+      "path": "pages/teacher/credits-use/index",
+      "style": { "navigationBarTitleText": "积分兑换" }
+    },
+    {
+      "path": "pages/teacher/credits-guide/index",
+      "style": { "navigationBarTitleText": "积分说明" }
+    },
+    {
       "path": "pages/legal/privacy",
       "style": { "navigationBarTitleText": "隐私政策" }
     },

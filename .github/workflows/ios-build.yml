@@ -1,5 +1,5 @@
 name: Build iOS & Upload to App Store Connect
-# Workflow for building AiFuXue iOS app
+
 on:
   workflow_dispatch:
     inputs:
@@ -23,23 +23,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Select latest Xcode
+      - name: Select Xcode
         run: |
-          LATEST_XCODE=$(ls -d /Applications/Xcode*.app 2>/dev/null | sort -V | tail -1)
-          echo "Selecting: $LATEST_XCODE"
-          sudo xcode-select -s "$LATEST_XCODE/Contents/Developer"
-          xcodebuild -version
-
-      - name: Fix App Icon (remove alpha channel)
-        run: |
-          ICON="aifuxue-ios/AiFuXue/Assets.xcassets/AppIcon.appiconset/icon-1024.png"
-          if [ -f "$ICON" ]; then
-            echo "Removing alpha channel from app icon..."
-            sips -s format jpeg -s formatOptions 100 "$ICON" --out "${ICON}.jpg"
-            sips -s format png "${ICON}.jpg" --out "$ICON"
-            rm -f "${ICON}.jpg"
-            echo "Alpha channel removed via sips"
+          # 优先选择稳定版 Xcode 16.x，避免 beta 版本兼容问题
+          STABLE_XCODE=$(ls -d /Applications/Xcode_16*.app 2>/dev/null | sort -V | tail -1)
+          if [ -z "$STABLE_XCODE" ]; then
+            STABLE_XCODE=$(ls -d /Applications/Xcode*.app 2>/dev/null | grep -v beta | sort -V | tail -1)
           fi
+          if [ -z "$STABLE_XCODE" ]; then
+            STABLE_XCODE=$(ls -d /Applications/Xcode*.app 2>/dev/null | sort -V | tail -1)
+          fi
+          echo "Selecting: $STABLE_XCODE"
+          sudo xcode-select -s "$STABLE_XCODE/Contents/Developer"
+          xcodebuild -version
 
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1

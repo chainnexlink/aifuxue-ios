@@ -32,6 +32,7 @@ model User {
   unionid             String?        @unique  // 微信unionid
   nickname            String?
   avatar              String?
+  role                String         @default("student") // student, parent, teacher
   gradeLevel          GradeLevel?
   province            String?
   city                String?
@@ -41,6 +42,14 @@ model User {
   parentPasswordSalt  String?
   parentFailedCount   Int            @default(0)
   parentLockedUntil   DateTime?
+  // 教师相关
+  teacherVerified     Boolean        @default(false)
+  // 积分相关
+  credits             Int            @default(0)
+  // 邀请注册关联
+  referredByTeacherId String?
+  referredByTeacher   User?          @relation("TeacherReferrals", fields: [referredByTeacherId], references: [id])
+  referredStudents    User[]         @relation("TeacherReferrals")
   createdAt           DateTime       @default(now())
   updatedAt           DateTime       @updatedAt
 
@@ -49,6 +58,7 @@ model User {
   exerciseAttempts    ExerciseAttempt[]
   mistakes            Mistake[]
   adWatchLogs         AdWatchLog[]
+  creditTransactions  CreditTransaction[]
 
   @@map("users")
 }
@@ -210,4 +220,27 @@ model Admin {
   updatedAt     DateTime      @updatedAt
 
   @@map("admins")
+}
+
+// ==================== 积分系统 ====================
+
+enum CreditTransactionType {
+  REFERRAL              // 学生注册奖励
+  MEMBERSHIP_DEDUCTION  // 抵扣会员购买
+  QUOTA_DEDUCTION       // 抵扣消耗次数
+}
+
+model CreditTransaction {
+  id            String                @id @default(uuid())
+  teacherId     String
+  amount        Int                   // 正数=获得, 负数=消费
+  type          CreditTransactionType
+  description   String?
+  relatedUserId String?               // 关联用户(注册的学生ID)
+  createdAt     DateTime              @default(now())
+
+  teacher       User                  @relation(fields: [teacherId], references: [id])
+
+  @@index([teacherId, createdAt(sort: Desc)])
+  @@map("credit_transactions")
 }

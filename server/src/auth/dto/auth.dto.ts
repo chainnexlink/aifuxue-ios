@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsEnum, Matches, Length } from 'class-validator';
+import { IsString, IsOptional, IsEnum, Matches, Length, IsIn } from 'class-validator';
 import { GradeLevel } from '@prisma/client';
 
 export class RegisterDto {
@@ -22,6 +22,14 @@ export class RegisterDto {
 
   @IsString()
   city: string;
+
+  @IsOptional()
+  @IsIn(['student', 'parent', 'teacher'], { message: '角色必须为 student/parent/teacher' })
+  role?: string;
+
+  @IsOptional()
+  @IsString()
+  inviteCode?: string;
 }
 
 export class LoginDto {

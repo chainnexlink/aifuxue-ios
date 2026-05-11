@@ -19,6 +19,8 @@ interface UserInfo {
   school?: string;
   subject?: string;
   teacherVerified?: boolean;
+  /** teacher credits */
+  credits?: number;
   /** invite code redeemed */
   inviteCodeUsed?: boolean;
   /** classes joined (student) */
