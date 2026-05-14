@@ -27,7 +27,8 @@
         <div class="sys-req">
           <h3>系统要求</h3>
           <div class="req-grid">
-            <div class="req-item"><strong>iOS</strong><span>iOS 13.0 或更高版本</span></div>
+            <div class="req-item"><strong>iOS</strong><span>iOS 14.0 或更高版本</span></div>
+            <div v-if="!isNativeIOS" class="req-item"><strong>Android</strong><span>Android 7.0 或更高版本</span></div>
             <div v-if="!isNativeIOS" class="req-item"><strong>微信小程序</strong><span>微信 7.0 或更高版本</span></div>
             <div class="req-item"><strong>Web</strong><span>Chrome / Safari / Edge 最新版</span></div>
           </div>

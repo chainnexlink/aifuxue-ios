@@ -4,6 +4,9 @@ import Photos
 import AVFoundation
 import UserNotifications
 import StoreKit
+import LocalAuthentication
+import CoreSpotlight
+import UniformTypeIdentifiers
 
 class ViewController: UIViewController, WKNavigationDelegate, WKUIDelegate,
                       UIImagePickerControllerDelegate, UINavigationControllerDelegate {
@@ -28,6 +31,8 @@ class ViewController: UIViewController, WKNavigationDelegate, WKUIDelegate,
         setupStoreManager()
         loadApp()
         requestNotificationPermission()
+        scheduleStudyReminders()
+        indexAppContentInSpotlight()
     }
 
     override func viewDidLayoutSubviews() {
@@ -57,6 +62,9 @@ class ViewController: UIViewController, WKNavigationDelegate, WKUIDelegate,
         userController.add(LeakAvoider(delegate: self), name: "nativeNotification")
         userController.add(LeakAvoider(delegate: self), name: "nativeIAP")
         userController.add(LeakAvoider(delegate: self), name: "nativeRestorePurchases")
+        userController.add(LeakAvoider(delegate: self), name: "nativeBiometric")
+        userController.add(LeakAvoider(delegate: self), name: "nativeStudyReminder")
+        userController.add(LeakAvoider(delegate: self), name: "nativeOfflineCache")
 
         let viewportScript = WKUserScript(source: """
             // Mark native iOS environment
@@ -480,6 +488,218 @@ class ViewController: UIViewController, WKNavigationDelegate, WKUIDelegate,
             .replacingOccurrences(of: "\n", with: "\\n")
             .replacingOccurrences(of: "\r", with: "")
     }
+
+    // MARK: - 学习提醒（原生通知）
+    private func scheduleStudyReminders() {
+        let center = UNUserNotificationCenter.current()
+        // 移除旧提醒后重新设置
+        center.removePendingNotificationRequests(withIdentifiers: ["daily_study_morning", "daily_study_evening"])
+
+        let enabled = UserDefaults.standard.bool(forKey: "study_reminder_enabled")
+        guard enabled else { return }
+
+        let morningHour = UserDefaults.standard.integer(forKey: "study_reminder_morning_hour")
+        let eveningHour = UserDefaults.standard.integer(forKey: "study_reminder_evening_hour")
+
+        // 早间提醒
+        let morningContent = UNMutableNotificationContent()
+        morningContent.title = "早安，该学习啦！"
+        morningContent.body = "新的一天开始了，打开爱辅学完成今日学习计划吧"
+        morningContent.sound = .default
+        morningContent.badge = 1
+        var morningDate = DateComponents()
+        morningDate.hour = morningHour > 0 ? morningHour : 8
+        morningDate.minute = 0
+        let morningTrigger = UNCalendarNotificationTrigger(dateMatching: morningDate, repeats: true)
+        let morningReq = UNNotificationRequest(identifier: "daily_study_morning", content: morningContent, trigger: morningTrigger)
+        center.add(morningReq)
+
+        // 晚间提醒
+        let eveningContent = UNMutableNotificationContent()
+        eveningContent.title = "今天学习了吗？"
+        eveningContent.body = "每天坚持学习，进步看得见。快来完成今日任务吧！"
+        eveningContent.sound = .default
+        eveningContent.badge = 1
+        var eveningDate = DateComponents()
+        eveningDate.hour = eveningHour > 0 ? eveningHour : 20
+        eveningDate.minute = 0
+        let eveningTrigger = UNCalendarNotificationTrigger(dateMatching: eveningDate, repeats: true)
+        let eveningReq = UNNotificationRequest(identifier: "daily_study_evening", content: eveningContent, trigger: eveningTrigger)
+        center.add(eveningReq)
+    }
+
+    // MARK: - Spotlight 搜索索引
+    private func indexAppContentInSpotlight() {
+        var searchableItems: [CSSearchableItem] = []
+
+        let features: [(String, String, String)] = [
+            ("aifuxue_ai_tutor", "AI智能辅导", "与AI老师对话，解答学习疑惑，获取个性化辅导方案"),
+            ("aifuxue_homework", "作业辅导", "拍照上传作业，AI智能批改并给出详细解析"),
+            ("aifuxue_practice", "题目练习", "海量题库智能推荐，薄弱知识点精准练习"),
+            ("aifuxue_progress", "学习进度", "查看学习报告，了解学习进度和知识掌握情况"),
+            ("aifuxue_membership", "会员中心", "管理订阅，解锁全部AI辅导功能"),
+        ]
+
+        for (id, title, desc) in features {
+            let attributeSet = CSSearchableItemAttributeSet(contentType: .content)
+            attributeSet.title = title
+            attributeSet.contentDescription = desc
+            attributeSet.keywords = ["爱辅学", "学习", "AI", "辅导", title]
+
+            let item = CSSearchableItem(
+                uniqueIdentifier: id,
+                domainIdentifier: "cn.aifuxue.app",
+                attributeSet: attributeSet
+            )
+            item.expirationDate = Date.distantFuture
+            searchableItems.append(item)
+        }
+
+        CSSearchableIndex.default().indexSearchableItems(searchableItems) { error in
+            if let error = error {
+                print("[Spotlight] 索引失败: \(error.localizedDescription)")
+            }
+        }
+    }
+
+    // MARK: - 生物识别认证
+    private func performBiometricAuth(reason: String) {
+        let context = LAContext()
+        var error: NSError?
+
+        guard context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error) else {
+            let result: [String: Any] = [
+                "success": false,
+                "error": "not_available",
+                "message": error?.localizedDescription ?? "设备不支持生物识别"
+            ]
+            sendBiometricResult(result)
+            return
+        }
+
+        let localizedReason = reason.isEmpty ? "请验证身份以继续使用" : reason
+        context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: localizedReason) { [weak self] success, authError in
+            DispatchQueue.main.async {
+                if success {
+                    self?.sendBiometricResult(["success": true, "message": "验证成功"])
+                } else {
+                    var errorCode = "auth_failed"
+                    if let err = authError as? LAError {
+                        switch err.code {
+                        case .userCancel: errorCode = "user_cancel"
+                        case .userFallback: errorCode = "user_fallback"
+                        case .biometryLockout: errorCode = "lockout"
+                        default: errorCode = "auth_failed"
+                        }
+                    }
+                    self?.sendBiometricResult([
+                        "success": false,
+                        "error": errorCode,
+                        "message": authError?.localizedDescription ?? "验证失败"
+                    ])
+                }
+            }
+        }
+    }
+
+    private func sendBiometricResult(_ result: [String: Any]) {
+        if let data = try? JSONSerialization.data(withJSONObject: result),
+           let json = String(data: data, encoding: .utf8) {
+            callJS("window.onNativeBiometricResult && window.onNativeBiometricResult('\(escapeForJS(json))');")
+        }
+    }
+
+    // MARK: - 学习提醒管理（来自 Web）
+    private func handleStudyReminderMessage(_ body: Any) {
+        guard let dict = body as? [String: Any], let action = dict["action"] as? String else { return }
+
+        switch action {
+        case "enable":
+            UserDefaults.standard.set(true, forKey: "study_reminder_enabled")
+            if let morning = dict["morningHour"] as? Int {
+                UserDefaults.standard.set(morning, forKey: "study_reminder_morning_hour")
+            }
+            if let evening = dict["eveningHour"] as? Int {
+                UserDefaults.standard.set(evening, forKey: "study_reminder_evening_hour")
+            }
+            scheduleStudyReminders()
+            sendStudyReminderResult(["success": true, "enabled": true])
+
+        case "disable":
+            UserDefaults.standard.set(false, forKey: "study_reminder_enabled")
+            UNUserNotificationCenter.current().removePendingNotificationRequests(
+                withIdentifiers: ["daily_study_morning", "daily_study_evening"]
+            )
+            sendStudyReminderResult(["success": true, "enabled": false])
+
+        case "getStatus":
+            let enabled = UserDefaults.standard.bool(forKey: "study_reminder_enabled")
+            let morning = UserDefaults.standard.integer(forKey: "study_reminder_morning_hour")
+            let evening = UserDefaults.standard.integer(forKey: "study_reminder_evening_hour")
+            sendStudyReminderResult([
+                "success": true,
+                "enabled": enabled,
+                "morningHour": morning > 0 ? morning : 8,
+                "eveningHour": evening > 0 ? evening : 20
+            ])
+
+        default:
+            break
+        }
+    }
+
+    private func sendStudyReminderResult(_ result: [String: Any]) {
+        if let data = try? JSONSerialization.data(withJSONObject: result),
+           let json = String(data: data, encoding: .utf8) {
+            callJS("window.onNativeStudyReminderResult && window.onNativeStudyReminderResult('\(escapeForJS(json))');")
+        }
+    }
+
+    // MARK: - 离线缓存管理
+    private func handleOfflineCacheMessage(_ body: Any) {
+        guard let dict = body as? [String: Any], let action = dict["action"] as? String else { return }
+
+        switch action {
+        case "save":
+            guard let key = dict["key"] as? String, let value = dict["value"] else { return }
+            if let jsonData = try? JSONSerialization.data(withJSONObject: value) {
+                UserDefaults.standard.set(jsonData, forKey: "offline_\(key)")
+                sendOfflineCacheResult(["success": true, "action": "save", "key": key])
+            }
+
+        case "load":
+            guard let key = dict["key"] as? String else { return }
+            if let data = UserDefaults.standard.data(forKey: "offline_\(key)"),
+               let value = try? JSONSerialization.jsonObject(with: data) {
+                sendOfflineCacheResult(["success": true, "action": "load", "key": key, "value": value])
+            } else {
+                sendOfflineCacheResult(["success": false, "action": "load", "key": key, "error": "not_found"])
+            }
+
+        case "remove":
+            guard let key = dict["key"] as? String else { return }
+            UserDefaults.standard.removeObject(forKey: "offline_\(key)")
+            sendOfflineCacheResult(["success": true, "action": "remove", "key": key])
+
+        case "clear":
+            let defaults = UserDefaults.standard
+            let allKeys = defaults.dictionaryRepresentation().keys.filter { $0.hasPrefix("offline_") }
+            for key in allKeys {
+                defaults.removeObject(forKey: key)
+            }
+            sendOfflineCacheResult(["success": true, "action": "clear"])
+
+        default:
+            break
+        }
+    }
+
+    private func sendOfflineCacheResult(_ result: [String: Any]) {
+        if let data = try? JSONSerialization.data(withJSONObject: result),
+           let json = String(data: data, encoding: .utf8) {
+            callJS("window.onNativeOfflineCacheResult && window.onNativeOfflineCacheResult('\(escapeForJS(json))');")
+        }
+    }
 }
 
 // MARK: - JS Bridge Handler
@@ -524,6 +744,13 @@ extension ViewController: WKScriptMessageHandler {
             if #available(iOS 15.0, *) {
                 storeManager?.restorePurchases()
             }
+        case "nativeBiometric":
+            let reason = (message.body as? [String: String])?["reason"] ?? ""
+            performBiometricAuth(reason: reason)
+        case "nativeStudyReminder":
+            handleStudyReminderMessage(message.body)
+        case "nativeOfflineCache":
+            handleOfflineCacheMessage(message.body)
         default:
             break
         }

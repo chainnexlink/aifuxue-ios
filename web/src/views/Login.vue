@@ -69,6 +69,13 @@
             <router-link to="/register">免费注册</router-link>
           </div>
 
+          <!-- 审核/演示快速入口 -->
+          <div v-if="isNativeIOS" class="demo-login-section">
+            <div class="demo-divider"><span>快速体验</span></div>
+            <button class="demo-btn" @click="handleDemoLogin('student')">学生体验入口</button>
+            <button class="demo-btn teacher" @click="handleDemoLogin('teacher')">教师体验入口</button>
+          </div>
+
           <p class="auth-agreement">
             登录即表示同意
             <router-link to="/agreement">《用户协议》</router-link>和
@@ -153,6 +160,17 @@ async function handlePhoneLogin() {
   } finally {
     submitting.value = false
   }
+}
+
+function handleDemoLogin(role: string) {
+  const demoUsers: Record<string, any> = {
+    student: { phone: '13800000001', role: 'student', name: '体验学生' },
+    teacher: { phone: '13800000002', role: 'teacher', name: '体验教师' },
+  }
+  const user = demoUsers[role] || demoUsers.student
+  localStorage.setItem('aifuxue_token', 'demo-token-' + Date.now())
+  localStorage.setItem('aifuxue_user', JSON.stringify(user))
+  window.location.href = '/app'
 }
 </script>
 
@@ -263,6 +281,19 @@ async function handlePhoneLogin() {
 
 .auth-agreement { text-align: center; margin-top: 16px; font-size: 12px; color: var(--text3); }
 .auth-agreement a { color: var(--primary); }
+
+.demo-login-section { margin-top: 24px; }
+.demo-divider { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+.demo-divider::before, .demo-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.demo-divider span { font-size: 13px; color: var(--text3); }
+.demo-btn {
+  width: 100%; padding: 14px; border: 2px solid var(--border); border-radius: 12px;
+  background: #fff; color: var(--text1); font-size: 15px; font-weight: 600;
+  cursor: pointer; transition: all 0.2s; margin-bottom: 10px;
+}
+.demo-btn:hover { border-color: var(--primary); background: var(--primary-light); color: var(--primary); }
+.demo-btn.teacher { border-color: var(--warning); color: var(--warning); }
+.demo-btn.teacher:hover { background: #FFF7ED; }
 
 @media (max-width: 768px) {
   .auth-container { flex-direction: column; }
