@@ -4,9 +4,14 @@ setlocal
 set SDK=F:\Android\Sdk
 set BUILD_TOOLS=%SDK%\build-tools\34.0.0
 set PLATFORM=%SDK%\platforms\android-34
-set PROJECT=f:\ai学习app\native-app
-set SRC=%PROJECT%\app\src\main
-set OUT=%PROJECT%\build
+
+rem Create junction to avoid CJK path issues with aapt2
+set JUNCTION=F:\aifuxue_build
+if not exist "%JUNCTION%" (
+    powershell -Command "New-Item -ItemType Junction -Path '%JUNCTION%' -Target 'f:\ai学习app\native-app' | Out-Null"
+)
+set SRC=%JUNCTION%\app\src\main
+set OUT=%JUNCTION%\build
 set UNSIGNED_APK=%OUT%\app-unsigned.apk
 set ALIGNED_APK=%OUT%\app-aligned.apk
 set FINAL_APK=%OUT%\aifuxue.apk
@@ -26,7 +31,7 @@ echo [3/6] Running AAPT2 link...
 if errorlevel 1 (echo AAPT2 link failed & exit /b 1)
 
 echo [4/6] Compiling Java...
-javac -source 1.8 -target 1.8 -bootclasspath "%PLATFORM%\android.jar" -classpath "%PLATFORM%\android.jar" -d "%OUT%\classes" "%SRC%\java\com\aifuxue\app\MainActivity.java"
+javac -encoding UTF-8 -source 1.8 -target 1.8 -bootclasspath "%PLATFORM%\android.jar" -classpath "%PLATFORM%\android.jar" -d "%OUT%\classes" "%SRC%\java\com\aifuxue\app\MainActivity.java"
 if errorlevel 1 (echo javac failed & exit /b 1)
 
 echo [5/6] Creating DEX...

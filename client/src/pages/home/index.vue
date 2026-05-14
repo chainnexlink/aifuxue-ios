@@ -10,6 +10,9 @@
         </view>
       </view>
 
+      <!-- 搜索栏 -->
+      <SearchBar placeholder="搜索笔记、错题、功能..." />
+
       <!-- 两个大卡片：课后笔记 + 拍错题录入 -->
       <view class="main-cards">
         <view class="main-card card-notes" @tap="takeNotePhoto">
@@ -123,6 +126,7 @@ import { userApi } from '@/utils/api';
 import { tryPlayAd, AD_UNIT_IDS } from '@/utils/ad-reward';
 import CustomTabBar from '@/components/CustomTabBar/index.vue';
 import TeacherHome from '@/components/teacher/TeacherHome.vue';
+import SearchBar from '@/components/SearchBar/index.vue';
 
 const userStore = useUserStore();
 const todayStats = ref({ notes: 0, exercises: 0, mistakes: 0 });

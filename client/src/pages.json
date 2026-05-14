@@ -173,6 +173,10 @@
       "style": { "navigationBarTitleText": "试卷预览" }
     },
     {
+      "path": "pages/teacher/exam-gen/paper-view",
+      "style": { "navigationBarTitleText": "试卷文件" }
+    },
+    {
       "path": "pages/teacher/teaching-plan/index",
       "style": { "navigationBarTitleText": "AI教案生成" }
     },
@@ -215,6 +219,10 @@
     {
       "path": "pages/legal/privacy",
       "style": { "navigationBarTitleText": "隐私政策" }
+    },
+    {
+      "path": "pages/search/index",
+      "style": { "navigationBarTitleText": "搜索", "navigationStyle": "custom" }
     },
     {
       "path": "pages/legal/agreement",

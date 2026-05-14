@@ -1,5 +1,5 @@
 <template>
-  <nav class="navbar">
+  <nav v-if="!isNativeIOS" class="navbar">
     <div class="nav-inner">
       <router-link to="/" class="nav-logo">
         <span class="logo-icon">AI</span>
@@ -28,4 +28,5 @@
 import { computed } from 'vue'
 
 const isLoggedIn = computed(() => !!localStorage.getItem('aifuxue_token'))
+const isNativeIOS = computed(() => !!(window as any).__NATIVE_IOS__ || !!(window as any).__NATIVE_ANDROID__)
 </script>

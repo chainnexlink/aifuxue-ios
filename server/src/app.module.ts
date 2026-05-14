@@ -11,6 +11,8 @@ import { MistakesModule } from './mistakes/mistakes.module';
 import { WebsiteModule } from './website/website.module';
 import { GradesModule } from './grades/grades.module';
 import { CreditsModule } from './credits/credits.module';
+import { SearchModule } from './search/search.module';
+import { SubscriptionModule } from './subscription/subscription.module';
 
 @Module({
   imports: [
@@ -26,6 +28,8 @@ import { CreditsModule } from './credits/credits.module';
     WebsiteModule,
     GradesModule,
     CreditsModule,
+    SearchModule,
+    SubscriptionModule,
   ],
 })
 export class AppModule {}

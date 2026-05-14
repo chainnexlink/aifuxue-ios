@@ -1,6 +1,6 @@
 <template>
   <div>
-    <Navbar />
+    <Navbar v-if="!isNativeIOS" />
     <section class="page-hero">
       <div class="container"><h1>下载爱辅学</h1><p>多平台支持，随时随地学习</p></div>
     </section>
@@ -8,7 +8,7 @@
     <section class="section">
       <div class="container" style="text-align:center;">
         <div class="download-grid">
-          <div v-for="p in platforms" :key="p.name" class="dl-card">
+          <div v-for="p in filteredPlatforms" :key="p.name" class="dl-card">
             <div class="dl-icon">{{ p.icon }}</div>
             <h3>{{ p.name }}</h3>
             <p>{{ p.desc }}</p>
@@ -17,14 +17,10 @@
           </div>
         </div>
 
-        <div class="qr-section">
+        <div v-if="!isNativeIOS" class="qr-section">
           <div class="qr-card">
             <div class="qr-placeholder"><span>微信扫码</span><span style="font-size:48px;">📱</span></div>
             <p>微信小程序</p>
-          </div>
-          <div class="qr-card">
-            <div class="qr-placeholder"><span>扫码下载</span><span style="font-size:48px;">📲</span></div>
-            <p>Android APK</p>
           </div>
         </div>
 
@@ -32,27 +28,33 @@
           <h3>系统要求</h3>
           <div class="req-grid">
             <div class="req-item"><strong>iOS</strong><span>iOS 13.0 或更高版本</span></div>
-            <div class="req-item"><strong>Android</strong><span>Android 8.0 或更高版本</span></div>
-            <div class="req-item"><strong>微信小程序</strong><span>微信 7.0 或更高版本</span></div>
+            <div v-if="!isNativeIOS" class="req-item"><strong>微信小程序</strong><span>微信 7.0 或更高版本</span></div>
             <div class="req-item"><strong>Web</strong><span>Chrome / Safari / Edge 最新版</span></div>
           </div>
         </div>
       </div>
     </section>
-    <Footer />
+    <Footer v-if="!isNativeIOS" />
   </div>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import Navbar from '@/components/Navbar.vue'
 import Footer from '@/components/Footer.vue'
 
+const isNativeIOS = computed(() => !!(window as any).__NATIVE_IOS__ || !!(window as any).__NATIVE_ANDROID__)
+
 const platforms = [
   { icon: '🍎', name: 'iOS', desc: 'iPhone / iPad', btn: 'App Store 下载', primary: true, link: '#' },
-  { icon: '🤖', name: 'Android', desc: '安卓手机 / 平板', btn: '下载 APK', primary: false, link: '#' },
-  { icon: '💬', name: '微信小程序', desc: '无需下载，扫码即用', btn: '扫码体验', primary: false, link: '#' },
+  { icon: '🤖', name: 'Android', desc: '安卓手机 / 平板', btn: '下载 APK', primary: false, link: '#', hideOnIOS: true },
+  { icon: '💬', name: '微信小程序', desc: '无需下载，扫码即用', btn: '扫码体验', primary: false, link: '#', hideOnIOS: true },
   { icon: '🌐', name: 'Web 版', desc: '浏览器直接使用', btn: '打开 Web 版', primary: true, link: '/app' },
 ]
+
+const filteredPlatforms = computed(() =>
+  isNativeIOS.value ? platforms.filter(p => !p.hideOnIOS) : platforms
+)
 </script>
 
 <style scoped>

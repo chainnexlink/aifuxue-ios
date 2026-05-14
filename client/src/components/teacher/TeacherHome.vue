@@ -8,6 +8,9 @@
       </view>
     </view>
 
+    <!-- 搜索栏 -->
+    <SearchBar placeholder="搜索学生、作业、功能..." />
+
     <!-- 教学概览 -->
     <view class="overview-card">
       <text class="card-title">教学概览</text>
@@ -112,6 +115,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useUserStore } from '@/store/user';
+import SearchBar from '@/components/SearchBar/index.vue';
 
 const userStore = useUserStore();
 

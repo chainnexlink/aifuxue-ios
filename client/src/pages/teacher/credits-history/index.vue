@@ -3,13 +3,13 @@
     <!-- 筛选Tab -->
     <view class="filter-tabs">
       <view class="tab" :class="{ active: currentTab === 'all' }" @tap="currentTab = 'all'">
-        <text>全部</text>
+        <text class="tab-text">全部</text>
       </view>
       <view class="tab" :class="{ active: currentTab === 'REFERRAL' }" @tap="currentTab = 'REFERRAL'">
-        <text>获得</text>
+        <text class="tab-text">获得</text>
       </view>
       <view class="tab" :class="{ active: currentTab === 'spent' }" @tap="currentTab = 'spent'">
-        <text>消费</text>
+        <text class="tab-text">消费</text>
       </view>
     </view>
 
@@ -32,7 +32,7 @@
       </view>
 
       <view v-if="hasMore" class="load-more" @tap="loadMore">
-        <text>{{ loading ? '加载中...' : '加载更多' }}</text>
+        <text class="load-more-text">{{ loading ? '加载中...' : '加载更多' }}</text>
       </view>
     </view>
   </view>
@@ -132,9 +132,9 @@ function formatTime(dateStr: string) {
   flex: 1; text-align: center; padding: 16rpx 0;
   background: var(--c-card); border-radius: 12rpx; border: 1rpx solid var(--c-border);
 }
-.tab text { font-size: 28rpx; color: var(--c-t2); }
+.tab-text { font-size: 28rpx; color: var(--c-t2); }
 .tab.active { border-color: var(--c-primary); background: rgba(91,123,255,0.1); }
-.tab.active text { color: var(--c-primary); font-weight: 600; }
+.tab.active .tab-text { color: var(--c-primary); font-weight: 600; }
 
 .list-wrap { padding: 0 32rpx; }
 .empty { text-align: center; padding: 80rpx 0; }
@@ -154,5 +154,5 @@ function formatTime(dateStr: string) {
 .record-amount.positive { color: #34D399; }
 
 .load-more { text-align: center; padding: 32rpx 0; }
-.load-more text { font-size: 26rpx; color: var(--c-primary); }
+.load-more-text { font-size: 26rpx; color: var(--c-primary); }
 </style>

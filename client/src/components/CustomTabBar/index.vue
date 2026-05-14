@@ -75,6 +75,9 @@ function switchTab(idx: number) {
   justify-content: center;
   gap: 4rpx;
   padding: 8rpx 0;
+  /* 确保整个区域可点击，修复iPad触摸热区问题 */
+  min-height: 100%;
+  box-sizing: border-box;
 }
 
 .tab-icon-text {
@@ -91,5 +94,36 @@ function switchTab(idx: number) {
 .tab-item.active .tab-label {
   color: #5B7BFF;
   font-weight: 600;
+}
+
+/* iPad适配：使用固定px值避免rpx换算错误 */
+@media screen and (min-width: 768px) {
+  .custom-tab-bar {
+    height: 64px;
+    border-top: 1px solid #2A2E3F;
+  }
+  .tab-item {
+    gap: 3px;
+    padding: 6px 0;
+  }
+  .tab-icon-text {
+    font-size: 22px;
+  }
+  .tab-label {
+    font-size: 11px;
+  }
+}
+
+/* iPad横屏：屏幕更宽，给底部栏留出合理高度 */
+@media screen and (min-width: 1024px) {
+  .custom-tab-bar {
+    height: 68px;
+  }
+  .tab-icon-text {
+    font-size: 24px;
+  }
+  .tab-label {
+    font-size: 12px;
+  }
 }
 </style>

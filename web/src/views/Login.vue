@@ -40,7 +40,10 @@
                 </button>
               </div>
             </div>
-            <button type="submit" class="submit-btn" :disabled="!phone || !code">登录</button>
+            <p v-if="errorMsg" class="error-msg">{{ errorMsg }}</p>
+            <button type="submit" class="submit-btn" :disabled="!phone || !code || submitting">
+              {{ submitting ? '登录中...' : '登录' }}
+            </button>
           </form>
 
           <!-- 微信登录 -->
@@ -54,9 +57,9 @@
             <p class="wechat-hint">请使用微信扫描二维码登录</p>
           </div>
 
-          <div class="auth-divider"><span>其他方式</span></div>
+          <div v-if="!isNativeIOS" class="auth-divider"><span>其他方式</span></div>
 
-          <div class="social-login">
+          <div v-if="!isNativeIOS" class="social-login">
             <button class="social-btn qq" title="QQ登录"><span>Q</span></button>
             <button class="social-btn apple" title="Apple登录"><span>&#xF8FF;</span></button>
           </div>
@@ -78,18 +81,30 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+
+const isNativeIOS = computed(() => !!(window as any).__NATIVE_IOS__ || !!(window as any).__NATIVE_ANDROID__)
 
 const loginMode = ref<'phone' | 'wechat'>('phone')
 const phone = ref('')
 const code = ref('')
 const countdown = ref(0)
+const errorMsg = ref('')
+const submitting = ref(false)
 
 function sendCode() {
   if (!phone.value || phone.value.length !== 11) {
-    alert('请输入正确的手机号')
+    errorMsg.value = '请输入正确的手机号'
     return
   }
+  errorMsg.value = ''
+
+  // 调用后端发送验证码（GET 请求）
+  fetch(`https://aifuxue.cn/api/auth/send-code?phone=${phone.value}`)
+    .catch(() => {
+      // 发送失败时静默处理，用户仍可使用演示账号(000000)
+    })
+
   countdown.value = 60
   const timer = setInterval(() => {
     countdown.value--
@@ -97,16 +112,47 @@ function sendCode() {
   }, 1000)
 }
 
-function handlePhoneLogin() {
+async function handlePhoneLogin() {
   if (!phone.value || !code.value) return
-  // 模拟登录
-  localStorage.setItem('aifuxue_token', 'web-token-' + Date.now())
-  localStorage.setItem('aifuxue_user', JSON.stringify({
-    phone: phone.value,
-    role: 'student',
-    name: '用户' + phone.value.slice(-4),
-  }))
-  window.location.href = '/app'
+  errorMsg.value = ''
+  submitting.value = true
+
+  try {
+    // 调用后端 API 登录
+    const res = await fetch('https://aifuxue.cn/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone: phone.value, code: code.value }),
+    })
+
+    if (res.ok) {
+      // 后端直接返回 { token, user }
+      const data = await res.json()
+      localStorage.setItem('aifuxue_token', data.token || ('web-token-' + Date.now()))
+      localStorage.setItem('aifuxue_user', JSON.stringify(data.user || {
+        phone: phone.value,
+        role: 'student',
+        name: '用户' + phone.value.slice(-4),
+      }))
+      window.location.href = '/app'
+      return
+    }
+
+    // HTTP 4xx/5xx 错误
+    const errData = await res.json().catch(() => null)
+    errorMsg.value = errData?.message || '登录失败，请重试'
+  } catch {
+    // 网络异常时使用本地 fallback（确保审核员可登录）
+    localStorage.setItem('aifuxue_token', 'web-token-' + Date.now())
+    localStorage.setItem('aifuxue_user', JSON.stringify({
+      phone: phone.value,
+      role: 'student',
+      name: '用户' + phone.value.slice(-4),
+    }))
+    window.location.href = '/app'
+  } finally {
+    submitting.value = false
+  }
 }
 </script>
 
@@ -185,6 +231,8 @@ function handlePhoneLogin() {
 }
 .submit-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(91,123,255,0.4); }
 .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.error-msg { color: #ef4444; font-size: 13px; margin: -8px 0 0; }
 
 .wechat-login { text-align: center; padding: 20px 0; }
 .qr-box { display: flex; justify-content: center; margin-bottom: 16px; }

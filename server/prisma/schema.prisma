@@ -59,6 +59,7 @@ model User {
   mistakes            Mistake[]
   adWatchLogs         AdWatchLog[]
   creditTransactions  CreditTransaction[]
+  appleTransactions   AppleTransaction[]
 
   @@map("users")
 }
@@ -228,6 +229,7 @@ enum CreditTransactionType {
   REFERRAL              // 学生注册奖励
   MEMBERSHIP_DEDUCTION  // 抵扣会员购买
   QUOTA_DEDUCTION       // 抵扣消耗次数
+  IAP_PURCHASE          // App Store 内购
 }
 
 model CreditTransaction {
@@ -243,4 +245,25 @@ model CreditTransaction {
 
   @@index([teacherId, createdAt(sort: Desc)])
   @@map("credit_transactions")
+}
+
+// ==================== Apple IAP ====================
+
+model AppleTransaction {
+  id                    String    @id @default(uuid())
+  userId                String
+  transactionId         String    @unique
+  originalTransactionId String
+  productId             String
+  type                  String    // "autoRenewable" | "consumable"
+  purchaseDate          DateTime
+  expiresDate           DateTime?
+  revocationDate        DateTime?
+  environment           String    // "Production" | "Sandbox"
+  createdAt             DateTime  @default(now())
+
+  user                  User      @relation(fields: [userId], references: [id])
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("apple_transactions")
 }

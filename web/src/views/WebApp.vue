@@ -1,7 +1,20 @@
 <template>
   <div class="app-layout">
+    <!-- 移动端顶部栏 -->
+    <div class="mobile-header">
+      <button class="hamburger-btn" @click="toggleSidebar">☰</button>
+      <span class="mobile-title">爱辅学</span>
+      <button class="top-btn" @click="activeMenu = 'membership'; closeSidebar()">
+        <span v-if="!isVip" class="vip-badge">VIP</span>
+        <span v-else class="vip-badge active">VIP</span>
+      </button>
+    </div>
+
+    <!-- 遮罩层 -->
+    <div v-if="sidebarOpen" class="sidebar-overlay" @click="closeSidebar"></div>
+
     <!-- 侧边栏 -->
-    <aside class="sidebar">
+    <aside :class="['sidebar', { open: sidebarOpen }]">
       <div class="sidebar-brand">
         <div class="sb-logo"><span>AI</span></div>
         <span class="sb-name">爱辅学</span>
@@ -11,7 +24,7 @@
         <div v-for="g in menuGroups" :key="g.title" class="nav-group">
           <span class="ng-title">{{ g.title }}</span>
           <a v-for="item in g.items" :key="item.id" :class="['nav-item', activeMenu === item.id ? 'active' : '']"
-             @click="activeMenu = item.id">
+             @click="activeMenu = item.id; closeSidebar()">
             <span class="ni-icon">{{ item.icon }}</span>
             <span class="ni-text">{{ item.label }}</span>
           </a>
@@ -390,32 +403,68 @@
           </div>
           <div class="plan-cards">
             <div v-if="userRole === 'teacher'" class="plan-cards-inner">
-              <div class="plan-card recommended">
+              <div :class="['plan-card', 'recommended', selectedPlan === 'cn.aifuxue.teacher.monthly' ? 'selected' : '']"
+                   @click="selectedPlan = 'cn.aifuxue.teacher.monthly'">
                 <span class="plan-badge">推荐</span>
-                <h4>月度订阅</h4>
-                <div class="plan-price"><span class="pp-amount">¥30</span><span class="pp-unit">/月</span></div>
+                <h4>老师月度会员</h4>
+                <div class="plan-price">
+                  <span class="pp-amount">{{ getProductPrice('cn.aifuxue.teacher.monthly') || '¥30' }}</span>
+                  <span class="pp-unit">/月</span>
+                </div>
                 <p>无限AI批改·出卷·导出</p>
               </div>
-              <div class="plan-card">
-                <h4>按次计费</h4>
-                <div class="plan-price"><span class="pp-amount">¥1</span><span class="pp-unit">/2次</span></div>
+              <div :class="['plan-card', selectedPlan === 'cn.aifuxue.teacher.peruse' ? 'selected' : '']"
+                   @click="selectedPlan = 'cn.aifuxue.teacher.peruse'">
+                <h4>教师按次计费</h4>
+                <div class="plan-price">
+                  <span class="pp-amount">{{ getProductPrice('cn.aifuxue.teacher.peruse') || '¥1' }}</span>
+                  <span class="pp-unit">/2次</span>
+                </div>
                 <p>AI批改/出卷/导出</p>
               </div>
             </div>
             <div v-else class="plan-cards-inner">
-              <div class="plan-card">
-                <h4>月度会员</h4>
-                <div class="plan-price"><span class="pp-amount">¥18</span><span class="pp-unit">/月</span></div>
+              <div :class="['plan-card', selectedPlan === 'cn.aifuxue.vip.monthly' ? 'selected' : '']"
+                   @click="selectedPlan = 'cn.aifuxue.vip.monthly'">
+                <h4>学生月度会员</h4>
+                <div class="plan-price">
+                  <span class="pp-amount">{{ getProductPrice('cn.aifuxue.vip.monthly') || '¥18' }}</span>
+                  <span class="pp-unit">/月</span>
+                </div>
               </div>
-              <div class="plan-card recommended">
+              <div :class="['plan-card', 'recommended', selectedPlan === 'cn.aifuxue.vip.yearly' ? 'selected' : '']"
+                   @click="selectedPlan = 'cn.aifuxue.vip.yearly'">
                 <span class="plan-badge">推荐</span>
-                <h4>年度会员</h4>
-                <div class="plan-price"><span class="pp-amount">¥128</span><span class="pp-unit">/年</span></div>
+                <h4>学生年度会员</h4>
+                <div class="plan-price">
+                  <span class="pp-amount">{{ getProductPrice('cn.aifuxue.vip.yearly') || '¥128' }}</span>
+                  <span class="pp-unit">/年</span>
+                </div>
                 <p>省¥88</p>
               </div>
             </div>
           </div>
-          <button class="purchase-btn">立即开通</button>
+          <button class="purchase-btn" :disabled="!selectedPlan || purchasing" @click="handlePurchase">
+            {{ purchasing ? '处理中...' : (selectedPlan ? '立即开通' : '请选择方案') }}
+          </button>
+          <button v-if="iapAvailable" class="restore-btn" :disabled="purchasing" @click="handleRestore">恢复购买</button>
+          <p v-if="purchaseMessage" :class="['purchase-msg', purchaseMessageType]">{{ purchaseMessage }}</p>
+          <div class="subscription-info">
+            <p class="si-title">订阅说明</p>
+            <ul class="si-list">
+              <li v-if="userRole === 'teacher'">订阅名称：老师月度会员（自动续期）</li>
+              <li v-else>订阅名称：学生月度会员 / 学生年度会员（自动续期）</li>
+              <li v-if="userRole === 'teacher'">订阅时长与价格：老师月度会员 ¥30/月（按月自动续期）；教师按次计费 ¥1/2次（消耗型，无自动续费）</li>
+              <li v-else>订阅时长与价格：学生月度会员 ¥18/月（按月自动续期）；学生年度会员 ¥128/年（按年自动续期）</li>
+              <li>确认购买后，费用将从您的 Apple ID 账户中扣除</li>
+              <li>订阅到期前24小时内自动续费，除非在到期前至少24小时关闭自动续费</li>
+              <li>您可以在 iPhone/iPad 的「设置 > Apple ID > 订阅」中管理或取消订阅</li>
+            </ul>
+            <div class="si-links">
+              <a href="/agreement" target="_blank">《用户协议(EULA)》</a>
+              <a href="/privacy" target="_blank">《隐私政策》</a>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -441,6 +490,18 @@ import { ref, computed, onMounted, reactive } from 'vue'
 
 const activeMenu = ref('dashboard')
 const isVip = ref(false)
+const sidebarOpen = ref(false)
+
+// ========== IAP State ==========
+const selectedPlan = ref('')
+const purchasing = ref(false)
+const purchaseMessage = ref('')
+const purchaseMessageType = ref<'success' | 'error'>('success')
+const iapProducts = ref<Record<string, { displayPrice: string; displayName: string }>>({})
+const iapAvailable = computed(() => !!(window as any).__NATIVE_IAP_AVAILABLE__)
+
+function toggleSidebar() { sidebarOpen.value = !sidebarOpen.value }
+function closeSidebar() { sidebarOpen.value = false }
 
 // ========== AI教案生成 ==========
 const tpStages = ['小学', '初中', '高中'] as const
@@ -539,6 +600,80 @@ onMounted(() => {
   }
   const saved = localStorage.getItem('aifuxue_user')
   if (saved) userInfo.value = JSON.parse(saved)
+
+  // 支持 iOS 原生 Quick Action 导航
+  ;(window as any).__setActiveMenu = (menu: string) => {
+    activeMenu.value = menu
+  }
+  // 处理页面加载前收到的 Quick Action
+  if ((window as any).__pendingMenu) {
+    activeMenu.value = (window as any).__pendingMenu
+    delete (window as any).__pendingMenu
+  }
+
+  // ========== IAP Callbacks ==========
+  ;(window as any).onNativeIAPProductsLoaded = (raw: any) => {
+    try {
+      const data = typeof raw === 'string' ? JSON.parse(raw) : raw
+      const products = data.products || data
+      if (Array.isArray(products)) {
+        for (const p of products) {
+          iapProducts.value[p.productId] = { displayPrice: p.displayPrice, displayName: p.displayName }
+        }
+      }
+    } catch (e) { console.error('[IAP] parse products error', e) }
+  }
+
+  ;(window as any).onNativeIAPResult = (raw: any) => {
+    purchasing.value = false
+    try {
+      const result = typeof raw === 'string' ? JSON.parse(raw) : raw
+      if (result.success) {
+        verifyTransaction(result.signedTransaction, result.productId)
+      } else {
+        purchaseMessage.value = result.message || result.error || '购买失败'
+        purchaseMessageType.value = 'error'
+      }
+    } catch (e) {
+      purchaseMessage.value = '购买结果解析失败'
+      purchaseMessageType.value = 'error'
+    }
+  }
+
+  ;(window as any).onNativeIAPRestoreResult = (raw: any) => {
+    purchasing.value = false
+    try {
+      const data = typeof raw === 'string' ? JSON.parse(raw) : raw
+      const transactions = data.transactions || data
+      if (Array.isArray(transactions) && transactions.length > 0) {
+        for (const t of transactions) {
+          verifyTransaction(t.signedTransaction, t.productId)
+        }
+        purchaseMessage.value = `已恢复 ${transactions.length} 个购买`
+        purchaseMessageType.value = 'success'
+      } else {
+        purchaseMessage.value = '没有找到可恢复的购买'
+        purchaseMessageType.value = 'error'
+      }
+    } catch (e) {
+      purchaseMessage.value = '恢复结果解析失败'
+      purchaseMessageType.value = 'error'
+    }
+  }
+
+  ;(window as any).onNativeIAPTransactionUpdate = (raw: any) => {
+    try {
+      const update = typeof raw === 'string' ? JSON.parse(raw) : raw
+      if (update.signedTransaction) {
+        verifyTransaction(update.signedTransaction, update.productId)
+      }
+    } catch (e) { console.error('[IAP] parse transaction update error', e) }
+  }
+
+  // Load IAP products if native bridge available
+  if ((window as any).__NATIVE_IAP_AVAILABLE__) {
+    ;(window as any).webkit.messageHandlers.nativeIAP.postMessage({ action: 'loadProducts' })
+  }
 })
 
 const userName = computed(() => userInfo.value?.name || '用户')
@@ -712,6 +847,66 @@ function startPractice(_p: any) { alert('练习功能开发中，请使用App端
 function showCreateClass() { alert('创建班级功能开发中') }
 function showPublishHomework() { alert('发布作业功能开发中') }
 function handleGenerate() { alert('AI出卷功能开发中，生成后将支持Word/PDF导出') }
+
+// ========== IAP Functions ==========
+function getProductPrice(productId: string): string {
+  return iapProducts.value[productId]?.displayPrice || ''
+}
+
+function handlePurchase() {
+  if (!selectedPlan.value || purchasing.value) return
+  if (iapAvailable.value) {
+    purchasing.value = true
+    purchaseMessage.value = ''
+    ;(window as any).webkit.messageHandlers.nativeIAP.postMessage({
+      action: 'purchase',
+      productId: selectedPlan.value,
+    })
+  } else {
+    purchaseMessage.value = '应用内购买仅在 iOS App 中可用'
+    purchaseMessageType.value = 'error'
+  }
+}
+
+function handleRestore() {
+  if (purchasing.value) return
+  purchasing.value = true
+  purchaseMessage.value = ''
+  ;(window as any).webkit.messageHandlers.nativeRestorePurchases.postMessage({})
+}
+
+async function verifyTransaction(signedTransaction: string, productId: string) {
+  try {
+    const token = localStorage.getItem('aifuxue_token')
+    const res = await fetch('/api/subscription/verify', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ signedTransaction }),
+    })
+    const data = await res.json()
+    if (data.success) {
+      purchaseMessage.value = '购买成功！'
+      purchaseMessageType.value = 'success'
+      isVip.value = true
+      // For consumables, finish the transaction on native side
+      if (data.type === 'consumable' && data.transactionId) {
+        ;(window as any).webkit?.messageHandlers?.nativeIAP?.postMessage({
+          action: 'finishTransaction',
+          transactionId: String(data.transactionId),
+        })
+      }
+    } else {
+      purchaseMessage.value = data.message || '验证失败'
+      purchaseMessageType.value = 'error'
+    }
+  } catch (e: any) {
+    purchaseMessage.value = e.message || '网络错误'
+    purchaseMessageType.value = 'error'
+  }
+}
 </script>
 
 <style scoped>
@@ -932,8 +1127,11 @@ function handleGenerate() { alert('AI出卷功能开发中，生成后将支持W
 .vb-item { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text2); }
 .plan-cards { margin-bottom: 28px; }
 .plan-cards-inner { display: flex; gap: 20px; justify-content: center; }
-.plan-card { flex: 1; max-width: 280px; padding: 28px; border: 2px solid var(--border); border-radius: 16px; text-align: center; position: relative; }
+.plan-card { flex: 1; max-width: 280px; padding: 28px; border: 2px solid var(--border); border-radius: 16px; text-align: center; position: relative; cursor: pointer; transition: all 0.2s; }
+.plan-card:hover { border-color: var(--primary); transform: translateY(-2px); }
+.plan-card.selected { border-color: var(--primary); background: rgba(91,123,255,0.04); box-shadow: 0 0 0 3px rgba(91,123,255,0.15); }
 .plan-card.recommended { border-color: #FFD700; }
+.plan-card.recommended.selected { border-color: var(--primary); }
 .plan-badge { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, #FFD700, #FFA500); padding: 4px 16px; border-radius: 8px; font-size: 12px; font-weight: 700; color: #1A1D2E; }
 .plan-card h4 { font-size: 16px; font-weight: 600; color: var(--text2); margin-bottom: 12px; }
 .plan-price { margin-bottom: 8px; }
@@ -944,8 +1142,29 @@ function handleGenerate() { alert('AI出卷功能开发中，生成后将支持W
   width: 100%; max-width: 400px; margin: 0 auto; display: block; padding: 16px;
   border: none; border-radius: 12px;
   background: linear-gradient(135deg, #FFD700, #FFA500); color: #1A1D2E;
-  font-size: 16px; font-weight: 700; cursor: pointer;
+  font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.2s;
 }
+.purchase-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.purchase-btn:not(:disabled):hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(255,215,0,0.4); }
+.restore-btn {
+  width: 100%; max-width: 400px; margin: 12px auto 0; display: block; padding: 12px;
+  border: 1px solid var(--border); border-radius: 10px;
+  background: #fff; color: var(--text2); font-size: 14px; cursor: pointer; transition: all 0.2s;
+}
+.restore-btn:hover { border-color: var(--primary); color: var(--primary); }
+.restore-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.purchase-msg { text-align: center; margin-top: 16px; font-size: 14px; font-weight: 600; }
+.purchase-msg.success { color: var(--success); }
+.purchase-msg.error { color: #E53935; }
+.subscription-info {
+  margin-top: 24px; padding: 20px 24px; background: #f8f9fc; border-radius: 12px;
+}
+.subscription-info .si-title { font-size: 14px; font-weight: 700; color: var(--text2); margin-bottom: 10px; }
+.subscription-info .si-list { list-style: none; padding: 0; margin: 0 0 12px; }
+.subscription-info .si-list li { font-size: 12px; color: var(--text3); line-height: 1.8; padding-left: 12px; position: relative; }
+.subscription-info .si-list li::before { content: '·'; position: absolute; left: 0; }
+.subscription-info .si-links { display: flex; gap: 16px; }
+.subscription-info .si-links a { font-size: 12px; color: var(--primary); text-decoration: underline; }
 
 /* 设置 */
 .settings-list { background: #fff; border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
@@ -1005,4 +1224,64 @@ function handleGenerate() { alert('AI出卷功能开发中，生成后将支持W
 .tp-slide-num { display: block; font-size: 13px; font-weight: 700; color: var(--primary); margin-bottom: 8px; }
 .tp-slide-body { font-size: 14px; color: var(--text1); line-height: 1.8; white-space: pre-wrap; margin: 0; font-family: inherit; }
 .tp-meta { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border); font-size: 13px; color: var(--text3); }
+
+/* 移动端头部 - 默认隐藏 */
+.mobile-header {
+  display: none; position: fixed; top: 0; left: 0; right: 0; z-index: 20;
+  height: 56px; background: #fff; border-bottom: 1px solid var(--border);
+  padding: 0 16px; align-items: center; justify-content: space-between;
+}
+.hamburger-btn {
+  width: 40px; height: 40px; border: none; background: none;
+  font-size: 22px; cursor: pointer; border-radius: 8px; color: var(--text1);
+}
+.hamburger-btn:hover { background: var(--bg-light); }
+.mobile-title { font-size: 17px; font-weight: 700; color: var(--primary); }
+.sidebar-overlay {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+  z-index: 9;
+}
+
+/* ===== iPad / 平板响应式 (≤1024px) ===== */
+@media (max-width: 1024px) {
+  .mobile-header { display: flex; }
+  .sidebar-overlay { display: block; }
+
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    z-index: 30;
+  }
+  .sidebar.open { transform: translateX(0); }
+
+  .main-content {
+    margin-left: 0 !important;
+    padding: 72px 20px 24px !important;
+  }
+
+  .top-bar { display: none; }
+
+  .quick-grid { grid-template-columns: repeat(3, 1fr) !important; gap: 12px !important; }
+  .stats-row { grid-template-columns: repeat(2, 1fr) !important; gap: 12px !important; }
+  .note-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  .ms-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  .class-list { grid-template-columns: repeat(2, 1fr) !important; }
+  .practice-options { grid-template-columns: repeat(2, 1fr) !important; }
+  .export-options { flex-direction: column; }
+  .plan-cards-inner { flex-direction: column; align-items: center; }
+  .plan-card { max-width: 100%; }
+  .vip-benefits { flex-wrap: wrap; justify-content: flex-start; gap: 12px; }
+}
+
+/* ===== 手机响应式 (≤640px) ===== */
+@media (max-width: 640px) {
+  .quick-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  .quick-card { padding: 16px; }
+  .qc-icon { font-size: 24px; }
+  .welcome-card { padding: 24px; flex-direction: column; text-align: center; gap: 16px; }
+  .wc-content h2 { font-size: 18px; }
+  .oral-scores { flex-wrap: wrap; gap: 20px; }
+  .ef-chips { gap: 6px; }
+  .ef-chip { padding: 6px 12px; font-size: 13px; }
+}
 </style>

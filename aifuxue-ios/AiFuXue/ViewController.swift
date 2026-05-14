@@ -3,6 +3,7 @@ import WebKit
 import Photos
 import AVFoundation
 import UserNotifications
+import StoreKit
 
 class ViewController: UIViewController, WKNavigationDelegate, WKUIDelegate,
                       UIImagePickerControllerDelegate, UINavigationControllerDelegate {
@@ -11,9 +12,10 @@ class ViewController: UIViewController, WKNavigationDelegate, WKUIDelegate,
     private var progressView: UIProgressView!
     private var splashView: UIView?
     private var observation: NSKeyValueObservation?
+    private var storeManager: StoreManager?
 
-    // MARK: - 生产地址
-    private let appURL = URL(string: "https://aifuxue.cn")!
+    // MARK: - 生产地址（直接进入应用功能页面，避免审核员停留在官网首页）
+    private let appURL = URL(string: "https://aifuxue.cn/app")!
     private let appBgColor = UIColor(red: 15/255, green: 17/255, blue: 24/255, alpha: 1)
 
     // MARK: - Lifecycle
@@ -23,6 +25,7 @@ class ViewController: UIViewController, WKNavigationDelegate, WKUIDelegate,
         setupWebView()
         setupProgressView()
         setupSplash()
+        setupStoreManager()
         loadApp()
         requestNotificationPermission()
     }
@@ -52,8 +55,14 @@ class ViewController: UIViewController, WKNavigationDelegate, WKUIDelegate,
         userController.add(LeakAvoider(delegate: self), name: "nativeShare")
         userController.add(LeakAvoider(delegate: self), name: "nativeClipboard")
         userController.add(LeakAvoider(delegate: self), name: "nativeNotification")
+        userController.add(LeakAvoider(delegate: self), name: "nativeIAP")
+        userController.add(LeakAvoider(delegate: self), name: "nativeRestorePurchases")
 
         let viewportScript = WKUserScript(source: """
+            // Mark native iOS environment
+            window.__NATIVE_IOS__ = true;
+            window.__NATIVE_IAP_AVAILABLE__ = true;
+
             var meta = document.querySelector('meta[name="viewport"]');
             if (!meta) {
                 meta = document.createElement('meta');
@@ -64,7 +73,7 @@ class ViewController: UIViewController, WKNavigationDelegate, WKUIDelegate,
             if (window.innerWidth >= 768) {
                 document.documentElement.classList.add('is-ipad');
             }
-        """, injectionTime: .atDocumentEnd, forMainFrameOnly: true)
+        """, injectionTime: .atDocumentStart, forMainFrameOnly: false)
         userController.addUserScript(viewportScript)
 
         config.userContentController = userController
@@ -437,6 +446,40 @@ class ViewController: UIViewController, WKNavigationDelegate, WKUIDelegate,
         })
         present(alert, animated: true)
     }
+
+    // MARK: - Quick Action 导航（供 SceneDelegate 调用）
+    func navigateToMenu(_ menu: String) {
+        let js = """
+        if (window.__setActiveMenu) {
+            window.__setActiveMenu('\(menu)');
+        } else {
+            // 页面未加载完成时，延迟执行
+            window.__pendingMenu = '\(menu)';
+        }
+        """
+        webView.evaluateJavaScript(js, completionHandler: nil)
+    }
+
+    // MARK: - StoreKit IAP Setup
+    private func setupStoreManager() {
+        if #available(iOS 15.0, *) {
+            let manager = StoreManager()
+            manager.delegate = self
+            storeManager = manager
+        }
+    }
+
+    private func callJS(_ script: String) {
+        webView.evaluateJavaScript(script, completionHandler: nil)
+    }
+
+    private func escapeForJS(_ str: String) -> String {
+        return str
+            .replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "'", with: "\\'")
+            .replacingOccurrences(of: "\n", with: "\\n")
+            .replacingOccurrences(of: "\r", with: "")
+    }
 }
 
 // MARK: - JS Bridge Handler
@@ -466,13 +509,99 @@ extension ViewController: WKScriptMessageHandler {
                     delay: dict["delay"] as? TimeInterval ?? 1
                 )
             }
+        case "nativeIAP":
+            if #available(iOS 15.0, *), let dict = message.body as? [String: String],
+               let action = dict["action"] {
+                if action == "loadProducts" {
+                    storeManager?.loadProducts()
+                } else if action == "purchase", let pid = dict["productId"] {
+                    storeManager?.purchase(pid)
+                } else if action == "finishTransaction", let tid = dict["transactionId"] {
+                    storeManager?.finishTransaction(transactionId: tid)
+                }
+            }
+        case "nativeRestorePurchases":
+            if #available(iOS 15.0, *) {
+                storeManager?.restorePurchases()
+            }
         default:
             break
         }
     }
 }
 
-// MARK: - 防止 WKScriptMessageHandler 循环引用
+// MARK: - StoreManager Delegate
+@available(iOS 15.0, *)
+extension ViewController: StoreManagerDelegate {
+    func didLoadProducts(_ products: [IAPProductInfo]) {
+        var items: [[String: String]] = []
+        for p in products {
+            items.append([
+                "productId": p.productId,
+                "displayName": p.displayName,
+                "displayPrice": p.displayPrice,
+                "description": p.description,
+                "type": p.type
+            ])
+        }
+        if let data = try? JSONSerialization.data(withJSONObject: ["success": true, "products": items]),
+           let json = String(data: data, encoding: .utf8) {
+            callJS("window.onNativeIAPProductsLoaded && window.onNativeIAPProductsLoaded('\(escapeForJS(json))');")
+        }
+    }
+
+    func didCompletePurchase(productId: String, jwsTransaction: String) {
+        if let data = try? JSONSerialization.data(withJSONObject: [
+            "success": true,
+            "productId": productId,
+            "signedTransaction": jwsTransaction
+        ] as [String: Any]),
+           let json = String(data: data, encoding: .utf8) {
+            callJS("window.onNativeIAPResult && window.onNativeIAPResult('\(escapeForJS(json))');")
+        }
+    }
+
+    func didFailPurchase(productId: String, error: String, message: String) {
+        if let data = try? JSONSerialization.data(withJSONObject: [
+            "success": false,
+            "productId": productId,
+            "error": error,
+            "message": message
+        ] as [String: Any]),
+           let json = String(data: data, encoding: .utf8) {
+            callJS("window.onNativeIAPResult && window.onNativeIAPResult('\(escapeForJS(json))');")
+        }
+    }
+
+    func didRestorePurchases(_ transactions: [IAPRestoreInfo]) {
+        var items: [[String: Any]] = []
+        for t in transactions {
+            var item: [String: Any] = [
+                "productId": t.productId,
+                "signedTransaction": t.signedTransaction
+            ]
+            if let exp = t.expiresDate {
+                item["expiresDate"] = ISO8601DateFormatter().string(from: exp)
+            }
+            items.append(item)
+        }
+        if let data = try? JSONSerialization.data(withJSONObject: ["success": true, "transactions": items]),
+           let json = String(data: data, encoding: .utf8) {
+            callJS("window.onNativeIAPRestoreResult && window.onNativeIAPRestoreResult('\(escapeForJS(json))');")
+        }
+    }
+
+    func didReceiveTransactionUpdate(jwsTransaction: String) {
+        if let data = try? JSONSerialization.data(withJSONObject: [
+            "signedTransaction": jwsTransaction
+        ]),
+           let json = String(data: data, encoding: .utf8) {
+            callJS("window.onNativeIAPTransactionUpdate && window.onNativeIAPTransactionUpdate('\(escapeForJS(json))');")
+        }
+    }
+}
+
+// MARK: - Prevent WKScriptMessageHandler retain cycle
 class LeakAvoider: NSObject, WKScriptMessageHandler {
     weak var delegate: WKScriptMessageHandler?
     init(delegate: WKScriptMessageHandler) { self.delegate = delegate }

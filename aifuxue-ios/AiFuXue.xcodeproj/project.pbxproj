@@ -12,6 +12,7 @@
 		A1000003 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000003; };
 		A1000004 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A2000004; };
 		A1000006 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = A2000007; };
+		A1000007 /* StoreManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000008; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -21,6 +22,8 @@
 		A2000004 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A2000006 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A2000007 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		A2000008 /* StoreManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreManager.swift; sourceTree = "<group>"; };
+		A2000009 /* AiFuXue.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = AiFuXue.entitlements; sourceTree = "<group>"; };
 		A2000010 /* AiFuXue.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AiFuXue.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -46,9 +49,11 @@
 		A4000002 /* AiFuXue */ = {
 			isa = PBXGroup;
 			children = (
+				A2000009 /* AiFuXue.entitlements */,
 				A2000001 /* AppDelegate.swift */,
 				A2000002 /* SceneDelegate.swift */,
 				A2000003 /* ViewController.swift */,
+				A2000008 /* StoreManager.swift */,
 				A2000004 /* Assets.xcassets */,
 				A2000006 /* Info.plist */,
 				A2000007 /* PrivacyInfo.xcprivacy */,
@@ -137,6 +142,7 @@
 				A1000001 /* AppDelegate.swift in Sources */,
 				A1000002 /* SceneDelegate.swift in Sources */,
 				A1000003 /* ViewController.swift in Sources */,
+				A1000007 /* StoreManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -200,9 +206,10 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = AiFuXue/AiFuXue.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = VC5PK29BWD;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = AiFuXue/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "\U7231\U8f85\U5b66";
@@ -229,9 +236,10 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = AiFuXue/AiFuXue.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = VC5PK29BWD;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = AiFuXue/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "\U7231\U8f85\U5b66";

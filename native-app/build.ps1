@@ -1,10 +1,22 @@
 $ErrorActionPreference = "Stop"
 
 $SDK = "F:\Android\Sdk"
-$BT = "$SDK\build-tools\34.0.0"
+$BT = "$SDK\build-tools\35.0.0"
 $PLAT = "$SDK\platforms\android-34"
-$SRC = "f:\ai学习app\native-app\app\src\main"
-$OUT = "f:\ai学习app\native-app\build"
+
+# Fix JAVA_HOME if pointing to stale version
+$javaExe = (Get-Command java -ErrorAction SilentlyContinue).Source
+if ($javaExe) {
+    $env:JAVA_HOME = (Split-Path (Split-Path $javaExe))
+}
+
+# Create junction to avoid CJK path issues with aapt2
+$JUNCTION = "F:\aifuxue_build"
+if (-not (Test-Path $JUNCTION)) {
+    New-Item -ItemType Junction -Path $JUNCTION -Target "f:\ai学习app\native-app" | Out-Null
+}
+$SRC = "$JUNCTION\app\src\main"
+$OUT = "$JUNCTION\build"
 
 Write-Host "[1/6] Cleaning..."
 if (Test-Path $OUT) { Remove-Item -Recurse -Force $OUT }
@@ -19,7 +31,7 @@ Write-Host "[3/6] AAPT2 link..."
 if ($LASTEXITCODE -ne 0) { throw "AAPT2 link failed" }
 
 Write-Host "[4/6] javac..."
-& javac -source 1.8 -target 1.8 -bootclasspath "$PLAT\android.jar" -classpath "$PLAT\android.jar" -d "$OUT\classes" "$SRC\java\com\aifuxue\app\MainActivity.java"
+& javac -encoding UTF-8 -source 1.8 -target 1.8 -bootclasspath "$PLAT\android.jar" -classpath "$PLAT\android.jar" -d "$OUT\classes" "$SRC\java\com\aifuxue\app\MainActivity.java"
 if ($LASTEXITCODE -ne 0) { throw "javac failed" }
 
 Write-Host "[5/6] d8..."

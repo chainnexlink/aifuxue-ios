@@ -298,13 +298,15 @@ function doExportWord() {
   uni.showLoading({ title: '正在生成Word文档...' })
   setTimeout(() => {
     uni.hideLoading()
+    // 保存试卷数据到本地存储
+    saveExportData('Word')
     uni.showModal({
       title: '生成成功',
-      content: `${activeTab.value}卷Word文档已生成，可在「我的文件」中查看和下载编辑。`,
+      content: `${activeTab.value}卷Word文档已生成，可立即查看试卷内容。`,
       confirmText: '查看文件',
       cancelText: '返回',
       success(res) {
-        if (res.confirm) uni.showToast({ title: '文件管理开发中', icon: 'none' })
+        if (res.confirm) uni.navigateTo({ url: '/pages/teacher/exam-gen/paper-view' })
       },
     })
   }, 1500)
@@ -324,11 +326,12 @@ function doExportPdf() {
   uni.showLoading({ title: '正在生成PDF...' })
   setTimeout(() => {
     uni.hideLoading()
+    saveExportData('PDF')
     uni.showModal({
       title: 'PDF生成成功',
-      content: `${activeTab.value}卷PDF已生成，可直接打印使用或分享给他人。`,
-      confirmText: '预览/打印', cancelText: '分享',
-      success(res) { if (res.confirm) handlePrint(); else handleShare() },
+      content: `${activeTab.value}卷PDF已生成，可查看试卷内容或分享给他人。`,
+      confirmText: '查看文件', cancelText: '分享',
+      success(res) { if (res.confirm) uni.navigateTo({ url: '/pages/teacher/exam-gen/paper-view' }); else handleShare() },
     })
   }, 1500)
 }
@@ -358,6 +361,31 @@ function handleUse() {
       if (res.confirm) uni.redirectTo({ url: '/pages/teacher/homework-publish/index?from=examgen' })
     },
   })
+}
+
+function saveExportData(format: string) {
+  const paper = currentPaper.value
+  const now = new Date()
+  const timeStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
+  const exportData = {
+    title: `AI智能试卷 - ${activeTab.value}卷`,
+    type: paper.type,
+    tab: activeTab.value,
+    count: paper.count,
+    totalScore: paper.totalScore,
+    time: timeStr,
+    format,
+    questions: paper.questions.map(q => ({
+      type: q.type,
+      content: q.content,
+      options: q.options || [],
+      answer: q.answer || '',
+      analysis: q.analysis,
+      score: q.score,
+      difficulty: q.difficulty,
+    })),
+  }
+  uni.setStorageSync('exam_export_data', JSON.stringify(exportData))
 }
 </script>
 

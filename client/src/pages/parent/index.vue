@@ -37,6 +37,9 @@
         <text class="panel-badge">已验证</text>
       </view>
 
+      <!-- 搜索栏 -->
+      <SearchBar placeholder="搜索功能、作业、成绩..." />
+
       <view class="menu-section card">
         <view class="menu-item" @tap="goTimeControl">
           <view class="menu-icon-wrap mi-bg-yellow">
@@ -102,6 +105,7 @@ import { ref, onMounted } from 'vue';
 import { useUserStore } from '@/store/user';
 import { parentApi, userApi } from '@/utils/api';
 import { tryPlayAd, AD_UNIT_IDS } from '@/utils/ad-reward';
+import SearchBar from '@/components/SearchBar/index.vue';
 
 const userStore = useUserStore();
 const hasPassword = ref(false);

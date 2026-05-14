@@ -28,9 +28,9 @@
 
           <div class="pricing-card popular">
             <div class="popular-badge">学生/家长推荐</div>
-            <h3>VIP会员</h3>
+            <h3>学生月度会员</h3>
             <div class="price"><span class="price-amount">¥18</span><span class="price-unit">/月</span></div>
-            <p class="price-desc">或 ¥128/年（省¥88）</p>
+            <p class="price-desc">或 ¥128/年（学生年度会员，省¥88）</p>
             <router-link class="btn btn-primary" to="/register" style="width:100%;margin:24px 0;">立即开通</router-link>
             <ul class="plan-features">
               <li><span class="pf-icon check">&#10003;</span>去除所有广告</li>
@@ -46,9 +46,9 @@
 
           <div class="pricing-card teacher">
             <div class="popular-badge teacher-badge">教师专属</div>
-            <h3>教师订阅</h3>
+            <h3>老师月度会员</h3>
             <div class="price"><span class="price-amount">¥30</span><span class="price-unit">/月</span></div>
-            <p class="price-desc">或 ¥1/2次 按需使用</p>
+            <p class="price-desc">或 教师按次计费 ¥1/2次 按需使用</p>
             <router-link class="btn btn-dark" to="/register" style="width:100%;margin:24px 0;">教师注册</router-link>
             <ul class="plan-features">
               <li><span class="pf-icon check">&#10003;</span>AI批改无限次</li>
@@ -63,12 +63,29 @@
           </div>
         </div>
 
+        <!-- 订阅说明（Apple Guideline 3.1.2(c) 要求） -->
+        <div class="subscription-disclosure">
+          <h3>订阅说明</h3>
+          <ul>
+            <li><strong>学生月度会员 / 学生年度会员（自动续期）：</strong>学生月度会员 ¥18/月（按月自动续期）；学生年度会员 ¥128/年（按年自动续期，省¥88）</li>
+            <li><strong>老师月度会员（自动续期）：</strong>老师月度会员 ¥30/月（按月自动续期）；或教师按次计费 ¥1/2次（消耗型，无自动续费）</li>
+            <li>确认购买后，费用将从您的 Apple ID 账户中扣除</li>
+            <li>订阅到期前24小时内将自动续费，除非在到期前至少24小时关闭自动续费</li>
+            <li>您可以随时在 iPhone/iPad 的「设置 → Apple ID → 订阅」中管理或取消订阅</li>
+            <li>取消订阅后，当前周期内的权益仍然有效，到期后不再自动续费</li>
+          </ul>
+          <div class="sd-links">
+            <router-link to="/agreement">《用户协议(EULA)》</router-link>
+            <router-link to="/privacy">《隐私政策》</router-link>
+          </div>
+        </div>
+
         <!-- 功能对比表 -->
         <div class="compare-section">
           <h2 style="text-align:center;font-size:32px;font-weight:800;margin-bottom:40px;">功能对比</h2>
           <table class="compare-table">
             <thead>
-              <tr><th>功能</th><th>免费版</th><th>VIP会员</th><th>教师订阅</th></tr>
+              <tr><th>功能</th><th>免费版</th><th>学生会员</th><th>老师月度会员</th></tr>
             </thead>
             <tbody>
               <tr v-for="r in compareRows" :key="r.feature">
@@ -161,11 +178,11 @@ const compareRows = [
 ]
 
 const faqs = [
-  { q: '教师注册免费使用1个月具体包含什么？', a: '新注册的教师账户可免费体验全部教学功能1个月，包括AI批改、智能出卷、Word/PDF导出、班级管理等所有功能，无需任何付费。试用期结束后可选择月度订阅(¥30/月)或按次计费(¥1/2次)。' },
-  { q: '按次计费和月度订阅哪个更划算？', a: '如果您每月使用AI功能超过60次（批改+出卷+导出总计），月度订阅更划算。如果使用频率较低，按次计费更灵活。' },
-  { q: '学生/家长VIP和教师订阅有什么区别？', a: '学生/家长VIP主要解锁学习工具的无限使用和去广告。教师订阅专注于教学功能：AI批改、出卷、Word导出、试卷分享打印、成绩发布等。两者面向不同角色。' },
-  { q: '试卷导出Word版需要额外付费吗？', a: '教师月度订阅用户Word导出无限制。按次计费用户每次Word导出扣除1次额度(¥1/2次)。PDF导出VIP用户免费。' },
-  { q: '可以随时取消订阅吗？', a: '可以随时取消订阅，取消后当前周期仍然有效，到期后不再自动续费。' },
+  { q: '教师注册免费使用1个月具体包含什么？', a: '新注册的教师账户可免费体验全部教学功能1个月，包括AI批改、智能出卷、Word/PDF导出、班级管理等所有功能，无需任何付费。试用期结束后可选择老师月度会员(¥30/月)或教师按次计费(¥1/2次)。' },
+  { q: '按次计费和月度订阅哪个更划算？', a: '如果您每月使用AI功能超过60次（批改+出卷+导出总计），老师月度会员更划算。如果使用频率较低，教师按次计费更灵活。' },
+  { q: '学生会员和老师月度会员有什么区别？', a: '学生月度会员/学生年度会员主要解锁学习工具的无限使用和去广告。老师月度会员专注于教学功能：AI批改、出卷、Word导出、试卷分享打印、成绩发布等。两者面向不同角色。' },
+  { q: '试卷导出Word版需要额外付费吗？', a: '老师月度会员用户Word导出无限制。按次计费用户每次Word导出扣除1次额度(¥1/2次)。PDF导出学生会员免费。' },
+  { q: '可以随时取消订阅吗？', a: '可以随时取消订阅，取消后当前周期仍然有效，到期后不再自动续费。您可以在 iPhone/iPad 的「设置 > Apple ID > 订阅」中管理或取消。' },
 ]
 </script>
 
@@ -192,6 +209,18 @@ const faqs = [
 .pf-icon { font-weight: 700; width: 20px; text-align: center; }
 .pf-icon.check { color: var(--success); }
 .pf-icon.cross { color: var(--text3); }
+
+.subscription-disclosure {
+  max-width: 800px; margin: 0 auto 80px; padding: 28px 32px;
+  background: #f8f9fc; border-radius: 16px; border: 1px solid var(--border);
+}
+.subscription-disclosure h3 { font-size: 16px; font-weight: 700; color: var(--text1); margin-bottom: 14px; }
+.subscription-disclosure ul { list-style: none; padding: 0; margin: 0 0 16px; }
+.subscription-disclosure li { font-size: 13px; color: var(--text3); line-height: 2; padding-left: 14px; position: relative; }
+.subscription-disclosure li::before { content: '·'; position: absolute; left: 0; font-weight: 700; }
+.subscription-disclosure li strong { color: var(--text2); }
+.sd-links { display: flex; gap: 16px; }
+.sd-links a { font-size: 13px; color: var(--primary); text-decoration: underline; }
 
 .compare-table { width: 100%; border-collapse: collapse; margin-bottom: 80px; }
 .compare-table th, .compare-table td { padding: 14px 20px; text-align: center; border-bottom: 1px solid var(--border); font-size: 14px; }

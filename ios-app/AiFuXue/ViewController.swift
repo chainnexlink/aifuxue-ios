@@ -11,8 +11,8 @@ class ViewController: UIViewController, WKNavigationDelegate, WKUIDelegate,
     private var splashView: UIView?
     private var observation: NSKeyValueObservation?
 
-    // MARK: - 生产地址
-    private let appURL = URL(string: "https://aifuxue.cn")!
+    // MARK: - 生产地址（直接进入应用功能页面，避免审核员停留在官网首页）
+    private let appURL = URL(string: "https://aifuxue.cn/app")!
     private let appBgColor = UIColor(red: 15/255, green: 17/255, blue: 24/255, alpha: 1)
 
     // MARK: - Lifecycle
@@ -51,8 +51,11 @@ class ViewController: UIViewController, WKNavigationDelegate, WKUIDelegate,
         userController.add(LeakAvoider(delegate: self), name: "nativeHaptic")
         userController.add(LeakAvoider(delegate: self), name: "nativeShare")
 
-        // 注入 viewport 强制适配脚本
+        // 注入 viewport 强制适配脚本 + 原生标识
         let viewportScript = WKUserScript(source: """
+            // 标记原生 iOS 环境，供前端检测
+            window.__NATIVE_IOS__ = true;
+
             var meta = document.querySelector('meta[name="viewport"]');
             if (!meta) {
                 meta = document.createElement('meta');
@@ -65,7 +68,7 @@ class ViewController: UIViewController, WKNavigationDelegate, WKUIDelegate,
             if (window.innerWidth >= 768) {
                 document.documentElement.classList.add('is-ipad');
             }
-        """, injectionTime: .atDocumentEnd, forMainFrameOnly: true)
+        """, injectionTime: .atDocumentStart, forMainFrameOnly: false)
         userController.addUserScript(viewportScript)
 
         config.userContentController = userController

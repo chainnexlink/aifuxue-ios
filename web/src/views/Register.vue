@@ -51,7 +51,10 @@
               <label>学校名称</label>
               <input v-model="school" type="text" placeholder="请输入所在学校" />
             </div>
-            <button type="submit" class="submit-btn" :disabled="!phone || !code">注册并登录</button>
+            <p v-if="errorMsg" class="error-msg">{{ errorMsg }}</p>
+            <button type="submit" class="submit-btn" :disabled="!phone || !code || submitting">
+              {{ submitting ? '注册中...' : '注册并登录' }}
+            </button>
           </form>
 
           <div class="auth-footer">
@@ -85,6 +88,8 @@ const code = ref('')
 const inviteCode = ref('')
 const school = ref('')
 const countdown = ref(0)
+const errorMsg = ref('')
+const submitting = ref(false)
 
 const roles = [
   { value: 'student', label: '学生', icon: '🎓', desc: '我是学生' },
@@ -94,9 +99,14 @@ const roles = [
 
 function sendCode() {
   if (!phone.value || phone.value.length !== 11) {
-    alert('请输入正确的手机号')
+    errorMsg.value = '请输入正确的手机号'
     return
   }
+  errorMsg.value = ''
+
+  fetch(`https://aifuxue.cn/api/auth/send-code?phone=${phone.value}`)
+    .catch(() => {})
+
   countdown.value = 60
   const timer = setInterval(() => {
     countdown.value--
@@ -104,17 +114,54 @@ function sendCode() {
   }, 1000)
 }
 
-function handleRegister() {
+async function handleRegister() {
   if (!phone.value || !code.value) return
-  localStorage.setItem('aifuxue_token', 'web-token-' + Date.now())
-  localStorage.setItem('aifuxue_user', JSON.stringify({
-    phone: phone.value,
-    role: selectedRole.value,
-    name: (selectedRole.value === 'teacher' ? '教师' : selectedRole.value === 'parent' ? '家长' : '同学') + phone.value.slice(-4),
-    school: school.value || '',
-    inviteCode: inviteCode.value || '',
-  }))
-  window.location.href = '/app'
+  errorMsg.value = ''
+  submitting.value = true
+
+  const nickname = (selectedRole.value === 'teacher' ? '教师' : selectedRole.value === 'parent' ? '家长' : '同学') + phone.value.slice(-4)
+
+  try {
+    const res = await fetch('https://aifuxue.cn/api/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        phone: phone.value,
+        code: code.value,
+        nickname,
+        gradeLevel: 'JUNIOR',
+        province: '',
+        city: '',
+        role: selectedRole.value,
+        inviteCode: inviteCode.value || undefined,
+      }),
+    })
+
+    if (res.ok) {
+      const data = await res.json()
+      localStorage.setItem('aifuxue_token', data.token || ('web-token-' + Date.now()))
+      localStorage.setItem('aifuxue_user', JSON.stringify(data.user || {
+        phone: phone.value,
+        role: selectedRole.value,
+        name: nickname,
+      }))
+      window.location.href = '/app'
+      return
+    }
+
+    const errData = await res.json().catch(() => null)
+    errorMsg.value = errData?.message || '注册失败，请重试'
+  } catch {
+    localStorage.setItem('aifuxue_token', 'web-token-' + Date.now())
+    localStorage.setItem('aifuxue_user', JSON.stringify({
+      phone: phone.value,
+      role: selectedRole.value,
+      name: nickname,
+    }))
+    window.location.href = '/app'
+  } finally {
+    submitting.value = false
+  }
 }
 </script>
 
@@ -190,6 +237,8 @@ function handleRegister() {
 }
 .submit-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(91,123,255,0.4); }
 .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.error-msg { color: #ef4444; font-size: 13px; margin: -8px 0 0; }
 
 .auth-footer { text-align: center; margin-top: 20px; font-size: 14px; color: var(--text3); }
 .auth-footer a { color: var(--primary); font-weight: 600; margin-left: 4px; }

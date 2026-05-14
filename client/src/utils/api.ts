@@ -109,3 +109,18 @@ export const creditsApi = {
   useForQuota: (creditsToUse: number) =>
     request({ url: '/credits/use/quota', method: 'POST', data: { creditsToUse } }),
 };
+
+// ========== 搜索 ==========
+export const searchApi = {
+  /** 模糊搜索 */
+  search: (keyword: string, role: string) =>
+    request<{
+      results: Array<{
+        id: string;
+        type: string;
+        title: string;
+        subtitle: string;
+        path: string;
+      }>;
+    }>({ url: `/search?keyword=${encodeURIComponent(keyword)}&role=${role}` }),
+};

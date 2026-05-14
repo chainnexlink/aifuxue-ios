@@ -123,7 +123,8 @@ const tabIndicatorStyle = computed(() => {
   const tabs = ['target', 'mock', 'oral'];
   const idx = tabs.indexOf(activeTab.value);
   const percent = (idx / 3) * 100;
-  return { left: `calc(${percent}% + 20rpx)`, width: `calc(${100 / 3}% - 40rpx)` };
+  // 使用%+px替代rpx，避免iPad上rpx换算错误导致指示条位置偏移
+  return { left: `calc(${percent}% + 12px)`, width: `calc(${100 / 3}% - 24px)` };
 });
 const targetHistory = ref<any[]>([]);
 const mockHistory = ref<any[]>([]);
@@ -198,4 +199,23 @@ function formatTime(dateStr: string) {
 .history-meta { display: flex; align-items: center; gap: 16rpx; }
 .history-score { font-size: 24rpx; color: var(--c-primary); font-weight: 600; }
 .history-count, .history-time { font-size: 22rpx; color: var(--c-t3); }
+
+/* iPad适配 */
+@media screen and (min-width: 768px) {
+  .practice-page { padding-bottom: 70px; }
+  .sub-tabs { padding: 0 16px; padding-top: 56px; border-bottom: 1px solid var(--c-border); }
+  .sub-tab { padding: 16px 0; font-size: 15px; }
+  .tab-indicator { height: 3px; }
+  .tab-content { padding: 16px 24px; }
+  .entry-card { border-radius: 14px; padding: 20px 18px; gap: 16px; margin-bottom: 20px; }
+  .entry-emoji { font-size: 28px; }
+  .entry-title { font-size: 17px; margin-bottom: 4px; }
+  .entry-desc { font-size: 13px; }
+  .section-title { font-size: 16px; margin-bottom: 12px; }
+  .history-card { border-radius: 14px; padding: 16px; margin-bottom: 10px; gap: 14px; }
+  .history-title { font-size: 15px; margin-bottom: 6px; }
+  .history-meta { gap: 12px; }
+  .history-score { font-size: 13px; }
+  .history-count, .history-time { font-size: 12px; }
+}
 </style>

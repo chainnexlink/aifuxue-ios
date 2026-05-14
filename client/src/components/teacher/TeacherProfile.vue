@@ -9,7 +9,7 @@
         <view class="name-row">
           <text class="t-name">{{ userStore.user?.teacherName || '老师' }}</text>
           <view class="verify-tag">
-            <text>已认证</text>
+            <text class="verify-tag-text">已认证</text>
           </view>
         </view>
         <text class="t-school">{{ userStore.user?.school || '未设置学校' }}</text>
@@ -236,7 +236,7 @@ function handleLogout() {
 .name-row { display: flex; align-items: center; gap: 12rpx; margin-bottom: 8rpx; }
 .t-name { font-size: 36rpx; font-weight: 700; color: #FFF; }
 .verify-tag { background: rgba(255,255,255,0.25); padding: 4rpx 14rpx; border-radius: 10rpx; }
-.verify-tag text { font-size: 20rpx; color: #FFF; }
+.verify-tag-text { font-size: 20rpx; color: #FFF; }
 .t-school { font-size: 24rpx; color: rgba(255,255,255,0.8); display: block; margin-bottom: 4rpx; }
 .t-subject { font-size: 22rpx; color: rgba(255,255,255,0.6); }
 

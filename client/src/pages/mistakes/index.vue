@@ -191,4 +191,24 @@ function formatTime(dateStr: string) {
 .bottom-btn { flex: 1; height: 92rpx; border-radius: 20rpx; display: flex; align-items: center; justify-content: center; gap: 12rpx; font-size: 28rpx; font-weight: 600; }
 .btn-outline { background: transparent; border: 2rpx solid var(--c-primary); color: var(--c-primary); }
 .btn-fill { background: linear-gradient(145deg, #3D56C6, #5B7BFF); color: #FFF; }
+
+/* iPad适配 */
+@media screen and (min-width: 768px) {
+  .mistakes-page { padding-bottom: 140px; }
+  .page-header { padding: 56px 24px 12px; }
+  .page-title { font-size: 22px; }
+  .filter-bar { padding: 12px 0; }
+  .filter-tags { gap: 10px; padding: 0 24px; }
+  .filter-tag { padding: 8px 18px; font-size: 14px; }
+  .subject-bar { gap: 8px; padding: 10px 24px; }
+  .subject-tag { padding: 6px 14px; font-size: 13px; }
+  .list-area { padding: 14px 24px; }
+  .mistake-card { border-radius: 14px; padding: 18px 16px; margin-bottom: 12px; gap: 12px; }
+  .mc-text { font-size: 15px; margin-bottom: 8px; }
+  .mc-tags { gap: 6px; margin-bottom: 6px; }
+  .mc-tag { font-size: 12px; padding: 3px 10px; }
+  .mc-time { font-size: 12px; }
+  .bottom-bar { bottom: 64px; padding: 12px 24px; gap: 12px; border-top: 1px solid var(--c-border); }
+  .bottom-btn { height: 48px; border-radius: 12px; font-size: 15px; }
+}
 </style>

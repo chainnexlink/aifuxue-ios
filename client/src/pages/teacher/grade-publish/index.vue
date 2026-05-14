@@ -64,11 +64,7 @@
         <!-- 粘贴模式 -->
         <view v-if="importMode === 'paste'" class="paste-area">
           <text class="import-hint">从Excel复制学生成绩数据，粘贴到下方（每行格式：姓名 TAB键 分数）</text>
-          <textarea class="paste-input" :value="pasteText" @input="pasteText = ($event as any).detail.value" placeholder="示例：
-张三  95
-李四  88
-王五  72
-赵六  90" placeholder-style="color: #4D5466; font-size: 24rpx;" />
+          <textarea class="paste-input" :value="pasteText" @input="pasteText = ($event as any).detail.value" placeholder="示例：张三 95（每行一个学生）" placeholder-style="color: #4D5466; font-size: 24rpx;" />
           <view class="paste-actions">
             <text class="paste-count">已识别 {{ parsedLines }} 行数据</text>
             <view class="paste-btn" @tap="handlePasteImport"><text>匹配学生</text></view>
@@ -107,7 +103,7 @@
           <!-- 班主任视图 -->
           <template v-if="role === 'head'">
             <text class="col-name">{{ stu.name }}</text>
-            <text v-for="sub in allSubjects" :key="sub" class="col-subject score-cell" :class="{ 'score-low': getSubjectScore(stu, sub) < 60, 'score-high': getSubjectScore(stu, sub) >= 90 }">{{ getSubjectScore(stu, sub) || '-' }}</text>
+            <text v-for="sub in allSubjects" :key="sub" class="col-subject score-cell" :class="{ 'score-low': Number(getSubjectScore(stu, sub)) < 60, 'score-high': Number(getSubjectScore(stu, sub)) >= 90 }">{{ getSubjectScore(stu, sub) || '-' }}</text>
             <text class="col-total score-total">{{ getTotalScore(stu) || '-' }}</text>
             <text class="col-avg">{{ getAvgScore(stu) || '-' }}</text>
           </template>

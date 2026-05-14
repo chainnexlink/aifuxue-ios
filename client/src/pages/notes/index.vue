@@ -124,4 +124,23 @@ function formatTime(dateStr: string) {
 .arrow-shape { width: 14rpx; height: 14rpx; border-right: 3rpx solid var(--c-t3); border-top: 3rpx solid var(--c-t3); transform: rotate(45deg); }
 .fab { position: fixed; right: 40rpx; bottom: 180rpx; width: 100rpx; height: 100rpx; background: linear-gradient(145deg, #3D56C6, #5B7BFF); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 8rpx 28rpx rgba(91,123,255,0.45); z-index: 10; }
 .fab-icon { font-size: 44rpx; }
+
+/* iPad适配 */
+@media screen and (min-width: 768px) {
+  .notes-page { padding-bottom: 90px; }
+  .page-header { padding: 56px 24px 12px; }
+  .page-title { font-size: 22px; }
+  .filter-bar { padding: 12px 0; }
+  .filter-tags { gap: 10px; padding: 0 24px; }
+  .filter-tag { padding: 8px 20px; font-size: 14px; }
+  .list-area { padding: 14px 24px; }
+  .note-card { border-radius: 14px; padding: 18px 16px; margin-bottom: 12px; gap: 12px; }
+  .nc-subject { font-size: 12px; padding: 3px 10px; }
+  .nc-time { font-size: 12px; }
+  .nc-title { font-size: 16px; margin-bottom: 6px; }
+  .nc-footer { gap: 8px; }
+  .nc-export-tag { font-size: 11px; padding: 2px 8px; }
+  .fab { right: 24px; bottom: 100px; width: 52px; height: 52px; }
+  .fab-icon { font-size: 24px; }
+}
 </style>
